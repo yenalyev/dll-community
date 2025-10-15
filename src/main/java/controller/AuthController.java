@@ -1,6 +1,7 @@
 package controller;
 
 import dto.RegisterDto;
+import entity.enums.Language;
 import exception.UserAlreadyExistsException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -31,6 +32,10 @@ public class AuthController {
             @RequestParam(required = false) String logout,
             @RequestParam(required = false) String success,
             Model model) {
+
+        if (!Language.isSupported(lang)) {
+            return "redirect:/" + Language.UK.getCode() + "/login";
+        }
 
         if (error != null) {
             model.addAttribute("error", true);

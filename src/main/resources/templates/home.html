@@ -28,27 +28,27 @@
                         <a href="#" class="flex flex-col items-center bg-warning rounded-lg shadow-md p-4 hover:shadow-lg transition">
                             <div class="text-3xl mb-2">📚</div>
                             <div class="text-3xl font-bold text-gray-900">346</div>
-                            <div class="text-sm font-semibold text-gray-900 text-center">lesson plans</div>
+                            <div class="text-sm font-semibold text-gray-900 text-center" th:text="#{home.stats.lessons}">lesson plans</div>
                         </a>
                         <a href="#" class="flex flex-col items-center bg-warning rounded-lg shadow-md p-4 hover:shadow-lg transition">
                             <div class="text-3xl mb-2">📝</div>
                             <div class="text-3xl font-bold text-gray-900">130</div>
-                            <div class="text-sm font-semibold text-gray-900 text-center">grammar activities</div>
+                            <div class="text-sm font-semibold text-gray-900 text-center" th:text="#{home.stats.grammar}">grammar activities</div>
                         </a>
                         <a href="#" class="flex flex-col items-center bg-warning rounded-lg shadow-md p-4 hover:shadow-lg transition">
                             <div class="text-3xl mb-2">💬</div>
                             <div class="text-3xl font-bold text-gray-900">323</div>
-                            <div class="text-sm font-semibold text-gray-900 text-center">speaking activities</div>
+                            <div class="text-sm font-semibold text-gray-900 text-center" th:text="#{home.stats.speaking}">speaking activities</div>
                         </a>
                     </div>
 
-                    <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 mb-6">Ready-to-use ESL materials for teachers.</h1>
-                    <p class="text-lg text-gray-700 mb-8 text-justify">Our site offers a variety of ready-made lesson plans, speaking activities, and grammar games that are not only effective but also fun for A1-C1 students. With our materials, you can focus on what matters most - teaching your students. Explore our site now and discover how we can help enhance your teaching experience!</p>
+                    <h1 class="text-3xl md:text-4xl font-semibold text-gray-900 mb-6" th:text="#{home.hero.title}">Ready-to-use ESL materials</h1>
+                    <p class="text-lg text-gray-700 mb-8 text-justify" th:text="#{home.hero.description}">Our site offers...</p>
 
                     <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                        <a href="#" class="bg-warning text-gray-900 font-semibold py-3 px-6 rounded shadow-md hover:shadow-lg transition text-center">All lesson plans</a>
-                        <a href="#" class="bg-warning text-gray-900 font-semibold py-3 px-6 rounded shadow-md hover:shadow-lg transition text-center">Free materials</a>
-                        <a href="#" class="bg-gray-900 text-white font-semibold py-3 px-6 rounded shadow-md hover:bg-gray-800 transition text-center">Join now</a>
+                        <a href="#" class="bg-warning text-gray-900 font-semibold py-3 px-6 rounded shadow-md hover:shadow-lg transition text-center" th:text="#{button.all.lessons}">All lesson plans</a>
+                        <a href="#" class="bg-warning text-gray-900 font-semibold py-3 px-6 rounded shadow-md hover:shadow-lg transition text-center" th:text="#{button.free.materials}">Free materials</a>
+                        <a href="#" class="bg-gray-900 text-white font-semibold py-3 px-6 rounded shadow-md hover:bg-gray-800 transition text-center" th:text="#{button.join.now}">Join now</a>
                     </div>
                 </div>
             </div>
