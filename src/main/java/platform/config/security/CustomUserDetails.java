@@ -69,4 +69,9 @@ public class CustomUserDetails implements UserDetails {
     public String getName() {
         return user.getName();
     }
+
+    //TODO В майбутньому розглянути розділення на firstName + lastName
+    public String getFullName() {
+        return getName();
+    }
 }

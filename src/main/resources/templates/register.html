@@ -26,7 +26,7 @@
 
             <!-- Registration Form -->
             <form method="post"
-                  th:action="@{/register}"
+                  th:action="@{/{lang}/register(lang=${#locale.language})}"
                   th:object="${registerDto}"
                   class="space-y-5"
                   id="registrationForm">

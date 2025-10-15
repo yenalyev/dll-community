@@ -37,7 +37,7 @@
 
             <!-- Login Form -->
             <form method="post"
-                  th:action="@{/login}"
+                  th:action="@{/{lang}/login(lang=${#locale.language})}"
                   class="space-y-4">
 
                 <!-- CSRF Token -->

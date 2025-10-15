@@ -1,27 +1,58 @@
-# Dependencies
-node_modules/
-package-lock.json
-yarn.lock
+# ================================
+# DLL Community Platform .gitignore
+# ================================
 
-# Environment variables
-.env
-.env.local
-.env.*.local
+# Maven Build
+target/
+pom.xml.tag
+pom.xml.releaseBackup
+pom.xml.versionsBackup
+dependency-reduced-pom.xml
 
-# IDE
+# IDE - IntelliJ IDEA
 .idea/
 *.iml
+*.iws
+*.ipr
+out/
+
+# IDE - VS Code
 .vscode/
 
-# Build
-dist/
-build/
-out/
+# Compiled Files
+*.class
 
 # Logs
 *.log
-npm-debug.log*
+logs/
+spring.log
+/dv-site.log
 
-# OS
+# Environment & Configuration
+.env
+.env.local
+application-local.properties
+
+# Database
+*.db
+*.sqlite
+
+# OS Files
 .DS_Store
 Thumbs.db
+*~
+
+# Temporary Files
+*.tmp
+*.bak
+*.swp
+
+# Uploaded Files (якщо будуть)
+uploads/
+files/
+/images/
+
+# Package Files
+*.jar
+*.war
+*.ear
