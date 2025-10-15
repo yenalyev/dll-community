@@ -1,10 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
 <head>
-  <meta charset="UTF-8">
-  <title>$Title$</title>
+    <title>Log in</title>
 </head>
 <body>
-$END$
+
+<div layout:fragment="content">
+    <section class="py-12 px-4 bg-gray-50 min-h-screen flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
+            <!-- Logo -->
+            <div class="text-center mb-8">
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">ENG HUB</h1>
+                <p class="text-gray-600 uppercase tracking-wide">Authorization</p>
+            </div>
+
+            <!-- Success Message -->
+            <div th:if="${param.success}"
+                 class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+                Registration successful! Please login.
+            </div>
+
+            <!-- Logout Success -->
+            <div th:if="${param.logout}"
+                 class="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-blue-700 text-sm">
+                You have been logged out successfully.
+            </div>
+
+            <!-- Error Message -->
+            <div th:if="${param.error}"
+                 class="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+                <span th:if="${param.error == 'oauth'}">OAuth authentication failed. Please try again.</span>
+                <span th:unless="${param.error == 'oauth'}">Invalid email or password</span>
+            </div>
+
+            <!-- Login Form -->
+            <form method="post"
+                  th:action="@{/login}"
+                  class="space-y-4">
+
+                <!-- CSRF Token -->
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                <!-- Email Input -->
+                <div>
+                    <input type="email"
+                           name="username"
+                           placeholder="E-mail"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                           required
+                           autocomplete="email">
+                </div>
+
+                <!-- Password Input -->
+                <div>
+                    <input type="password"
+                           name="password"
+                           placeholder="Password"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                           required
+                           autocomplete="current-password">
+                </div>
+
+                <!-- Forgot Password Link -->
+                <div class="text-left">
+                    <a href="#forgot" class="text-sm text-gray-600 hover:text-gray-900 transition">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <!-- Remember Me (hidden but enabled) -->
+                <input type="hidden" name="remember-me" value="true">
+
+                <!-- Login Button -->
+                <button type="submit"
+                        class="w-full bg-warning text-gray-900 font-bold py-3 px-6 rounded-lg hover:bg-yellow-500 transition shadow-md hover:shadow-lg">
+                    Log in
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div class="flex items-center my-6">
+                <div class="flex-1 border-t border-gray-300"></div>
+                <span class="px-4 text-sm text-gray-500">or continue with</span>
+                <div class="flex-1 border-t border-gray-300"></div>
+            </div>
+
+            <!-- Google Login -->
+            <a th:href="@{/oauth2/authorization/google}"
+               class="w-full flex items-center justify-center gap-3 bg-white border-2 border-gray-300 py-3 rounded-lg hover:bg-gray-50 transition font-semibold text-gray-900">
+                <svg width="20" height="20" viewBox="0 0 16 16">
+                    <path fill="#4285F4" d="M14.9 8.161c0-.476-.039-.954-.121-1.422h-6.64v2.695h3.802a3.24 3.24 0 01-1.407 2.127v1.75h2.269c1.332-1.22 2.097-3.02 2.097-5.15z"/>
+                    <path fill="#34A853" d="M8.14 15c1.898 0 3.499-.62 4.665-1.69l-2.268-1.749c-.631.427-1.446.669-2.395.669-1.836 0-3.393-1.232-3.952-2.888H1.85v1.803A7.044 7.044 0 008.14 15z"/>
+                    <path fill="#FBBC04" d="M4.187 9.342a4.17 4.17 0 010-2.68V4.859H1.849a6.97 6.97 0 000 6.286l2.338-1.803z"/>
+                    <path fill="#EA4335" d="M8.14 3.77a3.837 3.837 0 012.7 1.05l2.01-1.999a6.786 6.786 0 00-4.71-1.82 7.042 7.042 0 00-6.29 3.858L4.186 6.66c.556-1.658 2.116-2.89 3.952-2.89z"/>
+                </svg>
+                <span>Continue with Google</span>
+            </a>
+
+            <!-- Sign Up Link -->
+            <p class="text-center mt-6 text-gray-700">
+                Don't have an account?
+                <a th:href="@{/register}" class="font-semibold text-gray-900 hover:underline">Sign up</a>
+            </p>
+        </div>
+    </section>
+</div>
+
 </body>
 </html>
