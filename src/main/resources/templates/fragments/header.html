@@ -47,7 +47,7 @@
                             <rect y="12" width="32" height="12" fill="#FFD700"/>
                         </svg>
 
-                        <!-- Англійський прапор (Великобританія) -->
+                        <!-- Англійський прапор -->
                         <svg th:if="${currentLangCode == 'en'}" class="w-6 h-4" viewBox="0 0 60 30">
                             <rect width="60" height="30" fill="#012169"/>
                             <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
@@ -63,7 +63,8 @@
                             <rect y="16" width="32" height="8" fill="#FFCE00"/>
                         </svg>
 
-                        <span th:text="${selectedLang.short}">UA</span>
+                        <!-- ✅ ВИПРАВЛЕНО: UK → UA для української мови -->
+                        <span th:text="${currentLangCode == 'uk' ? 'UA' : #strings.toUpperCase(currentLangCode)}">UA</span>
 
                         <!-- Стрілка вниз -->
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -71,20 +72,19 @@
                         </svg>
                     </button>
 
-                    <!-- Dropdown меню -->
+                    <!-- Dropdown меню залишається без змін -->
                     <div x-show="open" x-transition class="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                         <th:block th:each="lang : ${supportedLangs}">
                             <a th:if="${lang.key != currentLangCode}"
                                th:href="@{'/' + ${lang.key} + ${basePath} + ${currentQuery}}"
                                class="flex items-center px-4 py-2 text-sm text-gray-900 hover:bg-warning transition">
 
-                                <!-- Український прапор в dropdown -->
+                                <!-- Прапори в dropdown -->
                                 <svg th:if="${lang.key == 'uk'}" class="w-6 h-4 mr-2" viewBox="0 0 32 24">
                                     <rect width="32" height="12" fill="#0057B7"/>
                                     <rect y="12" width="32" height="12" fill="#FFD700"/>
                                 </svg>
 
-                                <!-- Англійський прапор в dropdown -->
                                 <svg th:if="${lang.key == 'en'}" class="w-6 h-4 mr-2" viewBox="0 0 60 30">
                                     <rect width="60" height="30" fill="#012169"/>
                                     <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
@@ -93,7 +93,6 @@
                                     <path d="M30,0 L30,30 M0,15 L60,15" stroke="#C8102E" stroke-width="6"/>
                                 </svg>
 
-                                <!-- Німецький прапор в dropdown -->
                                 <svg th:if="${lang.key == 'de'}" class="w-6 h-4 mr-2" viewBox="0 0 32 24">
                                     <rect width="32" height="8" fill="#000"/>
                                     <rect y="8" width="32" height="8" fill="#D00"/>
