@@ -7,10 +7,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import service.user.UserService;
 
@@ -19,6 +16,7 @@ import javax.validation.Valid;
 @Slf4j
 @Controller
 @RequiredArgsConstructor
+@RequestMapping("/{lang}") // Префікс для всіх URL в цьому класі
 public class AuthController {
 
     private final UserService userService;
@@ -28,6 +26,7 @@ public class AuthController {
      */
     @GetMapping("/login")
     public String loginPage(
+            @PathVariable String lang,
             @RequestParam(required = false) String error,
             @RequestParam(required = false) String logout,
             @RequestParam(required = false) String success,
@@ -55,7 +54,7 @@ public class AuthController {
      * Показує сторінку реєстрації
      */
     @GetMapping("/register")
-    public String registerPage(Model model) {
+    public String registerPage(@PathVariable String lang, Model model) {
         model.addAttribute("registerDto", new RegisterDto());
         return "register";
     }
@@ -65,6 +64,7 @@ public class AuthController {
      */
     @PostMapping("/register")
     public String register(
+            @PathVariable String lang,
             @Valid @ModelAttribute("registerDto") RegisterDto registerDto,
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes,
@@ -88,7 +88,7 @@ public class AuthController {
             redirectAttributes.addFlashAttribute("success",
                     "Registration successful! Please login.");
 
-            return "redirect:/login?success=true";
+            return "redirect:/" + lang + "/login?success=true";
 
         } catch (UserAlreadyExistsException e) {
             log.warn("Registration failed - email already exists: {}", registerDto.getEmail());

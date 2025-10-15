@@ -3,7 +3,7 @@
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
       layout:decorate="~{layout/main}">
 <head>
-    <title>Sign up</title>
+    <title th:text="#{auth.register.title}">Sign up</title>
 </head>
 <body>
 
@@ -12,14 +12,8 @@
         <div class="bg-white rounded-xl shadow-2xl max-w-md w-full p-8">
             <!-- Logo -->
             <div class="text-center mb-8">
-                <h1 class="text-3xl font-bold text-gray-900 mb-2">DLL Community</h1>
-                <p class="text-gray-600">Створіть ваш обліковий запис</p>
-            </div>
-
-            <!-- Success Message (якщо є) -->
-            <div th:if="${success}"
-                 class="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
-                <span th:text="${success}">Registration successful!</span>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2" th:text="#{app.name}">DLL Community</h1>
+                <p class="text-gray-600" th:text="#{auth.register.title}">Створіть ваш обліковий запис</p>
             </div>
 
             <!-- Error Messages -->
@@ -42,13 +36,13 @@
 
                 <!-- Full Name -->
                 <div>
-                    <label for="name" class="block text-sm font-semibold text-gray-900 mb-2">
+                    <label for="name" class="block text-sm font-semibold text-gray-900 mb-2" th:text="#{auth.name}">
                         Повне ім'я
                     </label>
                     <input type="text"
                            id="name"
                            th:field="*{name}"
-                           placeholder="Введіть ваше ім'я"
+                           th:placeholder="#{auth.name}"
                            class="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-warning transition"
                            th:classappend="${#fields.hasErrors('name')} ? 'border-red-500' : 'border-gray-300'"
                            required>
@@ -59,13 +53,13 @@
 
                 <!-- Email -->
                 <div>
-                    <label for="email" class="block text-sm font-semibold text-gray-900 mb-2">
+                    <label for="email" class="block text-sm font-semibold text-gray-900 mb-2" th:text="#{auth.email}">
                         E-mail
                     </label>
                     <input type="email"
                            id="email"
                            th:field="*{email}"
-                           placeholder="example@email.com"
+                           th:placeholder="#{auth.email}"
                            class="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-warning transition"
                            th:classappend="${#fields.hasErrors('email')} ? 'border-red-500' : 'border-gray-300'"
                            required>
@@ -76,14 +70,14 @@
 
                 <!-- Password -->
                 <div>
-                    <label for="password" class="block text-sm font-semibold text-gray-900 mb-2">
+                    <label for="password" class="block text-sm font-semibold text-gray-900 mb-2" th:text="#{auth.password}">
                         Пароль
                     </label>
                     <div class="relative">
                         <input type="password"
                                id="password"
                                th:field="*{password}"
-                               placeholder="Мінімум 6 символів"
+                               th:placeholder="#{auth.password}"
                                class="w-full px-4 py-3 border-2 rounded-lg focus:outline-none focus:border-warning transition"
                                th:classappend="${#fields.hasErrors('password')} ? 'border-red-500' : 'border-gray-300'"
                                required
@@ -108,13 +102,13 @@
 
                 <!-- Confirm Password -->
                 <div>
-                    <label for="confirmPassword" class="block text-sm font-semibold text-gray-900 mb-2">
+                    <label for="confirmPassword" class="block text-sm font-semibold text-gray-900 mb-2" th:text="#{auth.password.confirm}">
                         Підтвердіть пароль
                     </label>
                     <input type="password"
                            id="confirmPassword"
                            name="confirmPassword"
-                           placeholder="Повторіть пароль"
+                           th:placeholder="#{auth.password.confirm}"
                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
                            required>
                     <p id="passwordMatch" class="text-xs mt-1 hidden"></p>
@@ -128,16 +122,17 @@
                            class="w-4 h-4 mt-1 rounded border-gray-300 text-warning focus:ring-warning"
                            required>
                     <label for="terms" class="ml-2 text-sm text-gray-700">
-                        Я погоджуюсь з
-                        <a href="#terms" class="text-gray-900 font-semibold hover:underline">умовами використання</a>
-                        та
-                        <a href="#privacy" class="text-gray-900 font-semibold hover:underline">політикою конфіденційності</a>
+                        <span th:text="#{auth.terms.agree}">Я погоджуюсь з</span>
+                        <a href="#terms" class="text-gray-900 font-semibold hover:underline" th:text="#{auth.terms.link}">умовами використання</a>
+                        <span th:text="#{auth.and}">та</span>
+                        <a href="#privacy" class="text-gray-900 font-semibold hover:underline" th:text="#{auth.privacy.link}">політикою конфіденційності</a>
                     </label>
                 </div>
 
                 <!-- Submit Button -->
                 <button type="submit"
-                        class="w-full bg-warning text-gray-900 font-bold py-3 px-6 rounded-lg hover:bg-yellow-500 transition shadow-md hover:shadow-lg">
+                        class="w-full bg-warning text-gray-900 font-bold py-3 px-6 rounded-lg hover:bg-yellow-500 transition shadow-md hover:shadow-lg"
+                        th:text="#{nav.signup}">
                     Зареєструватися
                 </button>
             </form>
@@ -145,7 +140,7 @@
             <!-- Divider -->
             <div class="flex items-center my-6">
                 <div class="flex-1 border-t border-gray-300"></div>
-                <span class="px-4 text-sm text-gray-500">або продовжити з</span>
+                <span class="px-4 text-sm text-gray-500" th:text="#{auth.or.continue}">або продовжити з</span>
                 <div class="flex-1 border-t border-gray-300"></div>
             </div>
 
@@ -158,13 +153,13 @@
                     <path fill="#FBBC04" d="M4.187 9.342a4.17 4.17 0 010-2.68V4.859H1.849a6.97 6.97 0 000 6.286l2.338-1.803z"/>
                     <path fill="#EA4335" d="M8.14 3.77a3.837 3.837 0 012.7 1.05l2.01-1.999a6.786 6.786 0 00-4.71-1.82 7.042 7.042 0 00-6.29 3.858L4.186 6.66c.556-1.658 2.116-2.89 3.952-2.89z"/>
                 </svg>
-                <span>Продовжити з Google</span>
+                <span th:text="#{auth.google}">Продовжити з Google</span>
             </a>
 
             <!-- Login Link -->
             <p class="text-center mt-6 text-gray-700">
-                Вже маєте акаунт?
-                <a th:href="@{/login}" class="font-semibold text-gray-900 hover:underline">Увійти</a>
+                <span th:text="#{auth.have.account}">Вже маєте акаунт?</span>
+                <a th:href="@{/login}" class="font-semibold text-gray-900 hover:underline" th:text="#{nav.login}">Увійти</a>
             </p>
         </div>
     </section>
@@ -173,6 +168,17 @@
 <!-- JavaScript -->
 <th:block layout:fragment="scripts">
     <script th:inline="javascript">
+        // Translations from messages
+        const translations = {
+            weak: /*[[#{password.strength.weak}]]*/ 'Слабкий',
+            medium: /*[[#{password.strength.medium}]]*/ 'Середній',
+            good: /*[[#{password.strength.good}]]*/ 'Хороший',
+            excellent: /*[[#{password.strength.excellent}]]*/ 'Відмінний',
+            matchSuccess: /*[[#{password.match.success}]]*/ '✓ Паролі співпадають',
+            matchError: /*[[#{password.match.error}]]*/ '✗ Паролі не співпадають',
+            passwordsMismatch: /*[[#{auth.error.passwords.match}]]*/ 'Паролі не співпадають!'
+        };
+
         // Password visibility toggle
         const togglePassword = document.getElementById('togglePassword');
         const password = document.getElementById('password');
@@ -212,7 +218,7 @@
                     strengthText.classList.remove('hidden');
 
                     const colors = ['#ef4444', '#f59e0b', '#eab308', '#22c55e'];
-                    const texts = ['Слабкий', 'Середній', 'Хороший', 'Відмінний'];
+                    const texts = [translations.weak, translations.medium, translations.good, translations.excellent];
                     const widths = ['25%', '50%', '75%', '100%'];
 
                     if (strength > 0) {
@@ -237,10 +243,10 @@
                 if (this.value.length > 0) {
                     passwordMatch.classList.remove('hidden');
                     if (this.value === passwordInput.value) {
-                        passwordMatch.textContent = '✓ Паролі співпадають';
+                        passwordMatch.textContent = translations.matchSuccess;
                         passwordMatch.className = 'text-xs mt-1 text-green-600';
                     } else {
-                        passwordMatch.textContent = '✗ Паролі не співпадають';
+                        passwordMatch.textContent = translations.matchError;
                         passwordMatch.className = 'text-xs mt-1 text-red-600';
                     }
                 } else {
@@ -255,7 +261,7 @@
             form.addEventListener('submit', function(e) {
                 if (passwordInput.value !== confirmPassword.value) {
                     e.preventDefault();
-                    alert('Паролі не співпадають!');
+                    alert(translations.passwordsMismatch);
                     return false;
                 }
             });

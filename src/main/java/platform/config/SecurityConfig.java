@@ -21,42 +21,43 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .authorizeHttpRequests(authorize -> authorize
-                        // Публічні сторінки (доступні всім)
+                        // --- 1. Очищений список публічних сторінок ---
                         .antMatchers(
+                                // Статичні ресурси
+                                "/css/**", "/js/**", "/images/**", "/webjars/**",
+                                // Шлюзи для входу/реєстрації (без мовного коду)
+                                "/login", "/register",
+                                // Кореневий URL для редіректу
                                 "/",
-                                "/home",
-                                "/index",
-                                "/register",
-                                "/login",
-                                "/css/**",
-                                "/js/**",
-                                "/images/**",
-                                "/webjars/**"
+                                // Публічні сторінки з будь-яким мовним кодом
+                                "/*/home", "/*/index", "/*/",
+                                "/*/login", "/*/register"
                         ).permitAll()
-
                         // Всі інші запити вимагають автентифікації
                         .anyRequest().authenticated()
                 )
-                // Налаштування форми входу
+                // --- 2. Налаштування форми входу ---
                 .formLogin(formLogin -> formLogin
+                        // Сторінка входу, яку бачить Spring Security (наш шлюз)
                         .loginPage("/login")
-                        .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error=true")
-                        .usernameParameter("username") // email
+                        // URL, на який відправляються дані форми (POST-запит).
+                        // Він повинен мати префікс, оскільки форма знаходиться на сторінці /{lang}/login
+                        .loginProcessingUrl("/{lang}/login")
+                        .defaultSuccessUrl("/", true) // Редірект на /, який потім перенаправить на /uk/
+                        .failureUrl("/login?error=true") // При помилці повертаємо на шлюз
+                        .usernameParameter("username")
                         .passwordParameter("password")
-                        .permitAll()
                 )
-                // Налаштування OAuth2
+                // --- 3. Налаштування OAuth2 ---
                 .oauth2Login(oauth2 -> oauth2
-                        .loginPage("/login")
+                        .loginPage("/login") // Користувач починає OAuth2 з нашої сторінки входу
                         .successHandler(oAuth2SuccessHandler)
                         .failureUrl("/login?error=oauth")
                 )
-                // Налаштування виходу
+                // --- 4. Налаштування виходу ---
                 .logout(logout -> logout
-                        .logoutUrl("/logout")
-                        .logoutSuccessUrl("/?logout=true")
+                        .logoutUrl("/logout") // URL для виходу залишається простим
+                        .logoutSuccessUrl("/login?logout=true") // Після виходу перенаправляємо на шлюз
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID")
                         .permitAll()
