@@ -12,8 +12,8 @@
     <artifactId>site</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-    <name>site</name>
-    <description>Dll-community site</description>
+    <name>DLL Community Site</name>
+    <description>DLL Community - Платформа для вивчення мов</description>
 
 
     <properties>
