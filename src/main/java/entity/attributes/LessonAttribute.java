@@ -1,14 +1,13 @@
 package entity.attributes;
 
+import entity.lesson.Lesson;
 import lombok.Data;
-// Уявімо, що у вас є сутність Lesson в пакеті com.dllcommunity.platform.entity.lesson
-// import com.dllcommunity.platform.entity.lesson.Lesson;
 
 import javax.persistence.*;
 import java.math.BigDecimal;
 
 /**
- * Таблиця зв'язку, яка присвоює урокам (товарам) конкретні значення атрибутів.
+ * Таблиця зв'язку, яка присвоює урокам конкретні значення атрибутів.
  */
 @Entity
 @Table(name = "lesson_attributes")
@@ -19,12 +18,9 @@ public class LessonAttribute {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // TODO: Замініть це на реальний зв'язок @ManyToOne, коли сутність Lesson буде готова
-    // @ManyToOne(fetch = FetchType.LAZY)
-    // @JoinColumn(name = "lesson_id", nullable = false)
-    // private Lesson lesson;
-    @Column(name = "lesson_id", nullable = false)
-    private Long lessonId;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "lesson_id", nullable = false)
+    private Lesson lesson;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "attribute_id", nullable = false)

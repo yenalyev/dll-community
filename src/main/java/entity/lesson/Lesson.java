@@ -1,16 +1,19 @@
 package entity.lesson;
 
-import java.time.LocalDateTime;
-import java.util.Set;
-
 import entity.attributes.LessonAttribute;
 import lombok.*;
 
 import javax.persistence.*;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name = "lesson")
-@Getter @Setter @NoArgsConstructor @AllArgsConstructor
+@Getter
+@Setter
+@NoArgsConstructor
+@AllArgsConstructor
 @Builder
 public class Lesson {
     @Id
@@ -31,16 +34,16 @@ public class Lesson {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<LessonTranslation> translations;
+    private Set<LessonTranslation> translations = new HashSet<>();
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<LessonPrice> prices;
+    private Set<LessonPrice> prices = new HashSet<>();
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<LessonMaterial> materials;
+    private Set<LessonMaterial> materials = new HashSet<>();
 
     @OneToMany(mappedBy = "lesson", cascade = CascadeType.ALL, orphanRemoval = true)
-    private Set<LessonAttribute> attributes;
+    private Set<LessonAttribute> attributes = new HashSet<>();
 
     @PrePersist
     protected void onCreate() {
