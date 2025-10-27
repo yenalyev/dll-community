@@ -6,7 +6,9 @@ import org.hibernate.annotations.UpdateTimestamp;
 import javax.persistence.*;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Зберігає унікальні атрибути та їхні налаштування поведінки в системі.
@@ -26,9 +28,15 @@ public class Attribute {
     @Column(name = "type", nullable = false, length = 20)
     private String type; // Тип поля: select, multiselect, text, number
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "placement_id", nullable = false)
-    private AttributePlacement placement;
+    @ToString.Exclude
+    @EqualsAndHashCode.Exclude
+    @ManyToMany(fetch = FetchType.LAZY)
+    @JoinTable(
+            name = "attribute_placements_map",
+            joinColumns = @JoinColumn(name = "attribute_id"),
+            inverseJoinColumns = @JoinColumn(name = "placement_id")
+    )
+    private Set<AttributePlacement> placements = new HashSet<>();
 
     @Column(name = "sort_order")
     private Integer sortOrder;
