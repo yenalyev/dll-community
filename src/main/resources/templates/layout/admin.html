@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title layout:title-pattern="$CONTENT_TITLE | Admin - $LAYOUT_TITLE">Admin - DLL Community</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        warning: '#FDD95F',
+                        admin: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body class="font-sans antialiased bg-gray-50" x-data="{ sidebarOpen: true }">
+
+<div class="flex h-screen overflow-hidden">
+
+    <!-- Sidebar -->
+    <div th:replace="~{admin/fragments/sidebar :: sidebar}"></div>
+
+    <!-- Main Content Area -->
+    <div class="flex-1 flex flex-col overflow-hidden">
+
+        <!-- Header -->
+        <div th:replace="~{admin/fragments/header :: header}"></div>
+
+        <!-- Main Content -->
+        <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+            <div layout:fragment="content">
+                <p class="text-gray-600">Контент адмін-панелі</p>
+            </div>
+        </main>
+
+        <!-- Footer -->
+        <div th:replace="~{admin/fragments/footer :: footer}"></div>
+
+    </div>
+</div>
+
+<!-- Page-specific scripts -->
+<th:block layout:fragment="scripts">
+    <!-- Скрипти конкретних сторінок -->
+</th:block>
+
+</body>
+</html>

@@ -27,12 +27,19 @@ public class LocaleConfig implements WebMvcConfigurer {
 
     /**
      * Реєструємо наш кастомний перехоплювач в Spring MVC.
-     * Він буде аналізувати URL на наявність мовного коду (/uk/, /en/ і т.д.).
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
-        // Створюємо екземпляр нашого перехоплювача, який тепер
-        // є окремим, повноцінним класом.
-        registry.addInterceptor(new PathLocaleInterceptor());
+        registry.addInterceptor(new PathLocaleInterceptor())
+                // Виключаємо шляхи, які не повинні оброблятися
+                // перехоплювачем мови
+                .excludePathPatterns(
+                        "/admin/**",      // Вся адмін-панель
+                        "/css/**",        // Статичні ресурси
+                        "/js/**",
+                        "/images/**",
+                        "/webjars/**",
+                        "/error"          // Сторінка помилок Spring
+                );
     }
 }

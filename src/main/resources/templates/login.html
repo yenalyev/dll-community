@@ -63,15 +63,29 @@
                            autocomplete="current-password">
                 </div>
 
-                <!-- Forgot Password Link -->
-                <div class="text-left">
-                    <a href="#forgot" class="text-sm text-gray-600 hover:text-gray-900 transition">
-                        Forgot password?
-                    </a>
-                </div>
 
-                <!-- Remember Me (hidden but enabled) -->
-                <input type="hidden" name="remember-me" value="true">
+                <!-- [NEW] Remember Me & Forgot Password -->
+                <div class="flex items-center justify-between">
+                    <!-- Checkbox -->
+                    <div class="flex items-center">
+                        <input id="remember-me"
+                               name="remember-me"
+                               type="checkbox"
+                               value="true"
+                               class="h-4 w-4 rounded border-gray-300 text-warning focus:ring-warning">
+                        <label for="remember-me" class="ml-2 block text-sm text-gray-700">
+                            Remember me
+                        </label>
+                    </div>
+
+                    <!-- Forgot Password Link -->
+                    <div class="text-sm">
+                        <a href="#forgot" class="font-medium text-gray-600 hover:text-gray-900 transition">
+                            Forgot password?
+                        </a>
+                    </div>
+                </div>
+                <!-- [END OF NEW BLOCK] -->
 
                 <!-- Login Button -->
                 <button type="submit"

@@ -13,6 +13,7 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
  */
 @SpringBootApplication
 @ComponentScan(basePackages = {
+        "admin",
         "platform",      // Головний пакет з конфігураціями
         "controller",    // Контролери
         "service",       // Сервіси

@@ -103,6 +103,21 @@
                                autocomplete="current-password">
                     </div>
 
+                    <!-- ✅ REMEMBER ME CHECKBOX -->
+                    <div class="flex items-center justify-between">
+                        <!-- Remember Me -->
+                        <div class="flex items-center">
+                            <input type="checkbox"
+                                   id="remember-me"
+                                   name="remember-me"
+                                   class="w-4 h-4 text-warning border-gray-300 rounded focus:ring-warning focus:ring-2">
+                            <label for="remember-me"
+                                   class="ml-2 text-sm text-gray-700 cursor-pointer"
+                                   th:text="#{auth.remember.me}">
+                                Remember me
+                            </label>
+                        </div>
+
                     <!-- Forgot Password Link -->
                     <div class="text-left">
                         <a th:href="@{/reset-password}"

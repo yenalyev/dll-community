@@ -18,6 +18,7 @@
                 <span class="text-2xl font-bold text-gray-900" th:text="#{app.name}">DLL Community</span>
             </a>
 
+            <!-- Навігація для комп'ютерів -->
             <nav class="hidden lg:flex items-center space-x-8">
                 <a href="#subscriptions" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.subscriptions}">Підписки</a>
                 <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" class="relative">
@@ -27,7 +28,7 @@
                     </button>
                     <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-48 bg-warning rounded-md shadow-lg py-2">
                         <a href="#lesson-plans" class="block px-4 py-2 text-gray-900 font-semibold hover:bg-yellow-400" th:text="#{nav.lessons.plans}">Плани уроків</a>
-                        <a href="#lesson-tracks" class="block px-4 py-2 text-gray-900 font-semibold hover:bg-yellow-400" th:text="#{nav.lessons.tracks}">Треки уроків</a>
+                        <a href="#lesson-tracks" class="block px-4 py-2 text-gray-900 font-semibold hover:bg-yellow-400" th:text="#{nav.lessons.tracks}">Treки уроків</a>
                         <a href="#list" class="block px-4 py-2 text-gray-900 font-semibold hover:bg-yellow-400" th:text="#{nav.lessons.list}">Список уроків</a>
                     </div>
                 </div>
@@ -37,81 +38,53 @@
                 <a href="#test" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.test}">Тестування рівня</a>
             </nav>
 
+            <!-- Блок автентифікації та мови для комп'ютерів -->
             <div class="hidden lg:flex items-center space-x-4">
-                <!-- Language Selector with SVG Flags -->
+
+                <!-- Селектор мови (без змін) -->
                 <div x-data="{ open: false }" @click.away="open = false" class="relative">
                     <button @click="open = !open" class="flex items-center space-x-2 text-gray-900 font-semibold hover:text-gray-700 transition">
-                        <!-- Український прапор -->
-                        <svg th:if="${currentLangCode == 'uk'}" class="w-6 h-4" viewBox="0 0 32 24">
-                            <rect width="32" height="12" fill="#0057B7"/>
-                            <rect y="12" width="32" height="12" fill="#FFD700"/>
-                        </svg>
+                        <!-- Прапори (без змін) -->
+                        <svg th:if="${currentLangCode == 'uk'}" class="w-6 h-4" viewBox="0 0 32 24"><rect width="32" height="12" fill="#0057B7"/><rect y="12" width="32" height="12" fill="#FFD700"/></svg>
+                        <svg th:if="${currentLangCode == 'en'}" class="w-6 h-4" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/><path d="M30,0 L30,30 M0,15 L60,15" stroke="#fff" stroke-width="10"/><path d="M30,0 L30,30 M0,15 L60,15" stroke="#C8102E" stroke-width="6"/></svg>
+                        <svg th:if="${currentLangCode == 'de'}" class="w-6 h-4" viewBox="0 0 32 24"><rect width="32" height="8" fill="#000"/><rect y="8" width="32" height="8" fill="#D00"/><rect y="16" width="32" height="8" fill="#FFCE00"/></svg>
 
-                        <!-- Англійський прапор -->
-                        <svg th:if="${currentLangCode == 'en'}" class="w-6 h-4" viewBox="0 0 60 30">
-                            <rect width="60" height="30" fill="#012169"/>
-                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
-                            <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/>
-                            <path d="M30,0 L30,30 M0,15 L60,15" stroke="#fff" stroke-width="10"/>
-                            <path d="M30,0 L30,30 M0,15 L60,15" stroke="#C8102E" stroke-width="6"/>
-                        </svg>
-
-                        <!-- Німецький прапор -->
-                        <svg th:if="${currentLangCode == 'de'}" class="w-6 h-4" viewBox="0 0 32 24">
-                            <rect width="32" height="8" fill="#000"/>
-                            <rect y="8" width="32" height="8" fill="#D00"/>
-                            <rect y="16" width="32" height="8" fill="#FFCE00"/>
-                        </svg>
-
-                        <!-- ✅ ВИПРАВЛЕНО: UK → UA для української мови -->
                         <span th:text="${currentLangCode == 'uk' ? 'UA' : #strings.toUpperCase(currentLangCode)}">UA</span>
-
-                        <!-- Стрілка вниз -->
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/>
-                        </svg>
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                     </button>
-
-                    <!-- Dropdown меню залишається без змін -->
+                    <!-- Меню мов (без змін) -->
                     <div x-show="open" x-transition class="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
                         <th:block th:each="lang : ${supportedLangs}">
                             <a th:if="${lang.key != currentLangCode}"
                                th:href="@{'/' + ${lang.key} + ${basePath} + ${currentQuery}}"
                                class="flex items-center px-4 py-2 text-sm text-gray-900 hover:bg-warning transition">
-
-                                <!-- Прапори в dropdown -->
-                                <svg th:if="${lang.key == 'uk'}" class="w-6 h-4 mr-2" viewBox="0 0 32 24">
-                                    <rect width="32" height="12" fill="#0057B7"/>
-                                    <rect y="12" width="32" height="12" fill="#FFD700"/>
-                                </svg>
-
-                                <svg th:if="${lang.key == 'en'}" class="w-6 h-4 mr-2" viewBox="0 0 60 30">
-                                    <rect width="60" height="30" fill="#012169"/>
-                                    <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
-                                    <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/>
-                                    <path d="M30,0 L30,30 M0,15 L60,15" stroke="#fff" stroke-width="10"/>
-                                    <path d="M30,0 L30,30 M0,15 L60,15" stroke="#C8102E" stroke-width="6"/>
-                                </svg>
-
-                                <svg th:if="${lang.key == 'de'}" class="w-6 h-4 mr-2" viewBox="0 0 32 24">
-                                    <rect width="32" height="8" fill="#000"/>
-                                    <rect y="8" width="32" height="8" fill="#D00"/>
-                                    <rect y="16" width="32" height="8" fill="#FFCE00"/>
-                                </svg>
-
+                                <svg th:if="${lang.key == 'uk'}" class="w-6 h-4 mr-2" viewBox="0 0 32 24"><rect width="32" height="12" fill="#0057B7"/><rect y="12" width="32" height="12" fill="#FFD700"/></svg>
+                                <svg th:if="${lang.key == 'en'}" class="w-6 h-4 mr-2" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/><path d="M30,0 L30,30 M0,15 L60,15" stroke="#fff" stroke-width="10"/><path d="M30,0 L30,30 M0,15 L60,15" stroke="#C8102E" stroke-width="6"/></svg>
+                                <svg th:if="${lang.key == 'de'}" class="w-6 h-4 mr-2" viewBox="0 0 32 24"><rect width="32" height="8" fill="#000"/><rect y="8" width="32" height="8" fill="#D00"/><rect y="16" width="32" height="8" fill="#FFCE00"/></svg>
                                 <span th:text="${lang.value.name}"></span>
                             </a>
                         </th:block>
                     </div>
                 </div>
 
+                <!-- Блок для гостей -->
                 <div sec:authorize="!isAuthenticated()" class="flex items-center">
                     <a th:href="@{/{lang}/register(lang=${currentLangCode})}" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.signup}">Реєстрація</a>
                     <span class="text-gray-900 mx-2">|</span>
                     <a th:href="@{/{lang}/login(lang=${currentLangCode})}" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.login}">Вхід</a>
                 </div>
 
+                <!-- Блок для автентифікованих -->
                 <div sec:authorize="isAuthenticated()" class="flex items-center space-x-4">
+
+                    <!-- [NEW] КНОПКА АДМІНА ДЛЯ КОМП'ЮТЕРІВ -->
+                    <a th:href="@{/admin}"
+                       sec:authorize="hasRole('ADMIN')"
+                       class="bg-gray-800 text-white px-3 py-1 rounded-md text-sm font-semibold hover:bg-gray-700 transition shadow">
+                        Admin
+                    </a>
+                    <!-- [END NEW] -->
+
                     <span class="text-gray-900 font-semibold" th:text="${#authentication.principal.fullName ?: #authentication.name}">Користувач</span>
                     <span class="text-gray-900">|</span>
                     <form method="post" th:action="@{/logout}" class="inline">
@@ -121,12 +94,13 @@
                 </div>
             </div>
 
+            <!-- Кнопка мобільного меню -->
             <button @click="mobileMenuOpen = !mobileMenuOpen" class="lg:hidden text-gray-900">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
             </button>
         </div>
 
-        <!-- Mobile Menu -->
+        <!-- Мобільне меню -->
         <div x-show="mobileMenuOpen" x-transition class="lg:hidden pb-4">
             <div class="flex flex-col space-y-2 mt-2">
                 <a href="#subscriptions" class="text-gray-900 font-semibold py-2" th:text="#{nav.subscriptions}">Підписки</a>
@@ -137,11 +111,23 @@
                 <a href="#test" class="text-gray-900 font-semibold py-2" th:text="#{nav.test}">Тестування рівня</a>
                 <hr class="border-gray-400 my-2">
 
+                <!-- Мобільний блок для гостей -->
                 <div sec:authorize="!isAuthenticated()">
                     <a th:href="@{/{lang}/register(lang=${currentLangCode})}" class="text-gray-900 font-semibold py-2 block" th:text="#{nav.signup}">Реєстрація</a>
                     <a th:href="@{/{lang}/login(lang=${currentLangCode})}" class="text-gray-900 font-semibold py-2 block" th:text="#{nav.login}">Вхід</a>
                 </div>
+
+                <!-- Мобільний блок для автентифікованих -->
                 <div sec:authorize="isAuthenticated()">
+
+                    <!-- [NEW] КНОПКА АДМІНА ДЛЯ МОБІЛЬНИХ -->
+                    <a th:href="@{/admin}"
+                       sec:authorize="hasRole('ADMIN')"
+                       class="block w-full text-center bg-gray-800 text-white font-semibold py-2 px-3 rounded-md mb-2 hover:bg-gray-700 transition shadow">
+                        Admin Panel
+                    </a>
+                    <!-- [END NEW] -->
+
                     <span class="text-gray-900 font-semibold py-2 block" th:text="${#authentication.principal.fullName ?: #authentication.name}">Користувач</span>
                     <form method="post" th:action="@{/logout}">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
@@ -151,34 +137,16 @@
 
                 <hr class="border-gray-400 my-2">
 
-                <!-- Mobile Language Selector with SVG Flags -->
+                <!-- Мобільний селектор мови (без змін) -->
                 <div class="flex items-center justify-center space-x-4 py-2">
                     <th:block th:each="lang : ${supportedLangs}">
                         <a th:href="@{'/' + ${lang.key} + ${basePath} + ${currentQuery}}"
                            class="inline-block"
                            th:classappend="${lang.key == currentLangCode} ? 'opacity-50 pointer-events-none' : ''">
 
-                            <!-- Український прапор -->
-                            <svg th:if="${lang.key == 'uk'}" class="w-8 h-6" viewBox="0 0 32 24">
-                                <rect width="32" height="12" fill="#0057B7"/>
-                                <rect y="12" width="32" height="12" fill="#FFD700"/>
-                            </svg>
-
-                            <!-- Англійський прапор -->
-                            <svg th:if="${lang.key == 'en'}" class="w-8 h-6" viewBox="0 0 60 30">
-                                <rect width="60" height="30" fill="#012169"/>
-                                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/>
-                                <path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/>
-                                <path d="M30,0 L30,30 M0,15 L60,15" stroke="#fff" stroke-width="10"/>
-                                <path d="M30,0 L30,30 M0,15 L60,15" stroke="#C8102E" stroke-width="6"/>
-                            </svg>
-
-                            <!-- Німецький прапор -->
-                            <svg th:if="${lang.key == 'de'}" class="w-8 h-6" viewBox="0 0 32 24">
-                                <rect width="32" height="8" fill="#000"/>
-                                <rect y="8" width="32" height="8" fill="#D00"/>
-                                <rect y="16" width="32" height="8" fill="#FFCE00"/>
-                            </svg>
+                            <svg th:if="${lang.key == 'uk'}" class="w-8 h-6" viewBox="0 0 32 24"><rect width="32" height="12" fill="#0057B7"/><rect y="12" width="32" height="12" fill="#FFD700"/></svg>
+                            <svg th:if="${lang.key == 'en'}" class="w-8 h-6" viewBox="0 0 60 30"><rect width="60" height="30" fill="#012169"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#fff" stroke-width="6"/><path d="M0,0 L60,30 M60,0 L0,30" stroke="#C8102E" stroke-width="4"/><path d="M30,0 L30,30 M0,15 L60,15" stroke="#fff" stroke-width="10"/><path d="M30,0 L30,30 M0,15 L60,15" stroke="#C8102E" stroke-width="6"/></svg>
+                            <svg th:if="${lang.key == 'de'}" class="w-8 h-6" viewBox="0 0 32 24"><rect width="32" height="8" fill="#000"/><rect y="8" width="32" height="8" fill="#D00"/><rect y="16" width="32" height="8" fill="#FFCE00"/></svg>
                         </a>
                     </th:block>
                 </div>
