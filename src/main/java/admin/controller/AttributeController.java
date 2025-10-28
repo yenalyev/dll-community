@@ -40,8 +40,10 @@ public class AttributeController {
         log.info("Attributes page accessed");
 
         model.addAttribute("pageTitle", "Manage Attributes");
-        model.addAttribute("attributes", attributeService.getAllAttributes());
+        model.addAttribute("attributes", attributeService.getAllAttributesWithDetails());
         model.addAttribute("placements", attributeService.getAllPlacements());
+
+        System.out.println("attributes - " + attributeService.getAllAttributesWithDetails());
 
         return "admin/attributes/index";
     }

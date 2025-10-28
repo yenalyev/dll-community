@@ -40,27 +40,55 @@ public class AttributeService {
         Attribute attribute = attributeRepository.findByIdWithTranslations(id)
                 .orElseThrow(() -> new IllegalArgumentException("Attribute not found with id: " + id));
 
-        // Крок 2: Довантажуємо опції (без їх перекладів)
-        Attribute attrWithOptions = attributeRepository.findByIdWithOptions(id)
-                .orElseThrow(() -> new IllegalArgumentException("Attribute not found with id: " + id));
+        log.debug("Attribute found: id={}, name={}, translations={}",
+                attribute.getId(),
+                attribute.getName(),
+                attribute.getTranslations().size());
 
-        // Копіюємо опції з другого запиту в наш основний об'єкт
-        attribute.setOptions(attrWithOptions.getOptions());
+        // Крок 2: Довантажуємо опції (БЕЗ їх перекладів)
+        Optional<Attribute> attrWithOptionsOpt = attributeRepository.findByIdWithOptions(id);
 
-        // Крок 3: Для кожної опції довантажуємо її переклади
-        if (attribute.getOptions() != null && !attribute.getOptions().isEmpty()) {
-            for (AttributeOption option : attribute.getOptions()) {
-                if (option.getId() != null) {
-                    // Завантажуємо опцію з перекладами
-                    AttributeOption optionWithTranslations = attributeRepository.findOptionByIdWithTranslations(option.getId())
-                            .orElse(option);
-                    // Встановлюємо переклади
-                    option.setTranslations(optionWithTranslations.getTranslations());
+        if (attrWithOptionsOpt.isPresent()) {
+            Attribute attrWithOptions = attrWithOptionsOpt.get();
+            log.debug("Found attribute with {} options",
+                    attrWithOptions.getOptions() != null ? attrWithOptions.getOptions().size() : 0);
+
+            if (attrWithOptions.getOptions() != null && !attrWithOptions.getOptions().isEmpty()) {
+                attribute.setOptions(attrWithOptions.getOptions());
+
+                log.debug("Set {} options to main attribute", attribute.getOptions().size());
+
+                // Крок 3: Для кожної опції довантажуємо її переклади
+                for (AttributeOption option : attribute.getOptions()) {
+                    if (option.getId() != null) {
+                        log.debug("Loading translations for option id={}", option.getId());
+
+                        Optional<AttributeOption> optionWithTranslationsOpt =
+                                attributeRepository.findOptionByIdWithTranslations(option.getId());
+
+                        if (optionWithTranslationsOpt.isPresent()) {
+                            AttributeOption optionWithTranslations = optionWithTranslationsOpt.get();
+                            option.setTranslations(optionWithTranslations.getTranslations());
+
+                            log.debug("Option {} now has {} translations",
+                                    option.getId(),
+                                    option.getTranslations() != null ? option.getTranslations().size() : 0);
+                        } else {
+                            log.warn("Could not load translations for option {}", option.getId());
+                        }
+                    } else {
+                        log.warn("Option has null ID, skipping translation loading");
+                    }
                 }
+            } else {
+                log.warn("Attribute {} has no options in database", id);
             }
+        } else {
+            log.warn("Could not load options for attribute {}", id);
         }
 
-        log.debug("Attribute loaded successfully with {} options",
+        log.debug("Attribute loading complete. Final state: {} translations, {} options",
+                attribute.getTranslations() != null ? attribute.getTranslations().size() : 0,
                 attribute.getOptions() != null ? attribute.getOptions().size() : 0);
 
         return attribute;
@@ -322,11 +350,21 @@ public class AttributeService {
     private AttributeDto convertToDtoWithOptions(Attribute attribute) {
         AttributeDto dto = convertToDto(attribute);
 
+        log.debug("=== CONVERTING ATTRIBUTE TO DTO WITH OPTIONS ===");
+        log.debug("Attribute ID: {}", attribute.getId());
+        log.debug("Attribute name: {}", attribute.getName());
+        log.debug("Translations in entity: {}", attribute.getTranslations());
+        log.debug("Options in entity: {}", attribute.getOptions());
+
         // Мапінг опцій
         if (attribute.getOptions() != null && !attribute.getOptions().isEmpty()) {
             List<AttributeOptionDto> optionDtos = new ArrayList<>();
 
             for (AttributeOption option : attribute.getOptions()) {
+                log.debug("Processing option ID: {}", option.getId());
+                log.debug("Option value: {}", option.getValue());
+                log.debug("Option translations: {}", option.getTranslations());
+
                 AttributeOptionDto optionDto = new AttributeOptionDto();
                 optionDto.setId(option.getId());
                 optionDto.setValue(option.getValue());
@@ -336,24 +374,31 @@ public class AttributeService {
                 if (option.getTranslations() != null && !option.getTranslations().isEmpty()) {
                     Map<String, String> optionTranslations = new HashMap<>();
                     for (OptionTranslation translation : option.getTranslations()) {
+                        log.debug("Option translation: {} = {}", translation.getLangCode(), translation.getLabel());
                         optionTranslations.put(translation.getLangCode(), translation.getLabel());
                     }
                     optionDto.setTranslations(optionTranslations);
+                    log.debug("Option DTO translations: {}", optionDto.getTranslations());
+                } else {
+                    log.warn("No translations found for option {}", option.getId());
                 }
 
                 optionDtos.add(optionDto);
             }
 
-            // Сортуємо опції за sortOrder
             optionDtos.sort(Comparator.comparing(AttributeOptionDto::getSortOrder,
                     Comparator.nullsLast(Comparator.naturalOrder())));
 
             dto.setOptions(optionDtos);
 
-            log.debug("Converted {} options for attribute {}", optionDtos.size(), attribute.getId());
+            log.debug("Total options converted: {}", optionDtos.size());
         } else {
-            log.debug("No options found for attribute {}", attribute.getId());
+            log.warn("No options found for attribute {}", attribute.getId());
         }
+
+        log.debug("=== DTO CONVERSION COMPLETE ===");
+        log.debug("DTO translations: {}", dto.getTranslations());
+        log.debug("DTO options: {}", dto.getOptions());
 
         return dto;
     }
