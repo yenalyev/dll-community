@@ -27,15 +27,15 @@
                         <svg class="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19.5 8.25l-7.5 7.5-7.5-7.5"/></svg>
                     </button>
                     <div x-show="open" x-transition class="absolute top-full left-0 mt-2 w-48 bg-warning rounded-md shadow-lg py-2">
+                        <a th:href="@{/{lang}/lessons(lang=${currentLangCode})}" class="block px-4 py-2 text-gray-900 font-semibold hover:bg-yellow-400" th:text="#{nav.lessons.list}">Список уроків</a>
                         <a href="#lesson-plans" class="block px-4 py-2 text-gray-900 font-semibold hover:bg-yellow-400" th:text="#{nav.lessons.plans}">Плани уроків</a>
                         <a href="#lesson-tracks" class="block px-4 py-2 text-gray-900 font-semibold hover:bg-yellow-400" th:text="#{nav.lessons.tracks}">Treки уроків</a>
-                        <a href="#list" class="block px-4 py-2 text-gray-900 font-semibold hover:bg-yellow-400" th:text="#{nav.lessons.list}">Список уроків</a>
                     </div>
                 </div>
                 <a href="#activities" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.activities}">Активності</a>
-                <a href="#materials" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.materials}">Всі матеріали</a>
-                <a href="#blog" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.blog}">Блог</a>
-                <a href="#test" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.test}">Тестування рівня</a>
+<!--                <a href="#materials" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.materials}">Всі матеріали</a>-->
+<!--                <a href="#blog" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.blog}">Блог</a>-->
+<!--                <a href="#test" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.test}">Тестування рівня</a>-->
             </nav>
 
             <!-- Блок автентифікації та мови для комп'ютерів -->
@@ -106,9 +106,9 @@
                 <a href="#subscriptions" class="text-gray-900 font-semibold py-2" th:text="#{nav.subscriptions}">Підписки</a>
                 <a href="#lessons" class="text-gray-900 font-semibold py-2" th:text="#{nav.lessons}">Уроки</a>
                 <a href="#activities" class="text-gray-900 font-semibold py-2" th:text="#{nav.activities}">Активності</a>
-                <a href="#materials" class="text-gray-900 font-semibold py-2" th:text="#{nav.materials}">Всі матеріали</a>
-                <a href="#blog" class="text-gray-900 font-semibold py-2" th:text="#{nav.blog}">Блог</a>
-                <a href="#test" class="text-gray-900 font-semibold py-2" th:text="#{nav.test}">Тестування рівня</a>
+<!--                <a href="#materials" class="text-gray-900 font-semibold py-2" th:text="#{nav.materials}">Всі матеріали</a>-->
+<!--                <a href="#blog" class="text-gray-900 font-semibold py-2" th:text="#{nav.blog}">Блог</a>-->
+<!--                <a href="#test" class="text-gray-900 font-semibold py-2" th:text="#{nav.test}">Тестування рівня</a>-->
                 <hr class="border-gray-400 my-2">
 
                 <!-- Мобільний блок для гостей -->

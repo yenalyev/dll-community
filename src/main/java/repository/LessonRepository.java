@@ -70,4 +70,30 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
             "FROM LessonTranslation t " +
             "WHERE t.lang = :lang AND t.slug = :slug")
     boolean existsByLangAndSlug(@Param("lang") String lang, @Param("slug") String slug);
+
+
+    /**
+     * Завантажити всі уроки з перекладами, відсортовані за датою створення (найновіші спочатку)
+     */
+    @Query("SELECT DISTINCT l FROM Lesson l " +
+            "LEFT JOIN FETCH l.translations " +
+            "ORDER BY l.createdAt DESC")
+    List<Lesson> findAllWithTranslationsOrderByCreatedAtDesc();
+
+    /**
+     * Завантажити перші N уроків з перекладами, відсортовані за датою створення (найновіші спочатку)
+     * Примітка: JPQL не підтримує LIMIT, тому цей метод буде працювати через назву
+     */
+    @Query("SELECT DISTINCT l FROM Lesson l " +
+            "LEFT JOIN FETCH l.translations " +
+            "ORDER BY l.createdAt DESC")
+    List<Lesson> findTopLessonsWithTranslations();
+
+    /**
+     * Знайти урок за slug та мовою
+     */
+    @Query("SELECT t.lesson FROM LessonTranslation t " +
+            "WHERE t.slug = :slug AND t.lang = :lang")
+    Optional<Lesson> findBySlugAndLang(@Param("slug") String slug, @Param("lang") String lang);
+
 }

@@ -588,4 +588,18 @@ public class LessonService {
 
         return dto;
     }
+
+    /**
+     * Отримати урок за slug та мовою
+     */
+    public LessonDto getLessonBySlugAndLang(String slug, String lang) {
+        log.info("Getting lesson by slug: {}, lang: {}", slug, lang);
+
+        Lesson lesson = lessonRepository.findBySlugAndLang(slug, lang)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Lesson not found with slug: " + slug + " for language: " + lang));
+
+        return getLessonById(lesson.getId());
+    }
+
 }

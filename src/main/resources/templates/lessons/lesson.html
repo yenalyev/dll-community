@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title th:text="${pageTitle}">Урок</title>
+
+    <!-- SEO мета-теги -->
+    <meta name="description" th:content="${translation.metaDescription}">
+
+    <!-- Додаткові стилі -->
+    <style>
+        /* Стилі для контенту уроку */
+        .lesson-content {
+            line-height: 1.8;
+        }
+
+        .lesson-content h2 {
+            font-size: 1.5rem;
+            font-weight: 600;
+            margin-top: 2rem;
+            margin-bottom: 1rem;
+            color: #111827;
+        }
+
+        .lesson-content h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+            color: #374151;
+        }
+
+        .lesson-content p {
+            margin-bottom: 1rem;
+        }
+
+        .lesson-content ul, .lesson-content ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .lesson-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Стилі для матеріалів */
+        .material-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .material-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Стилі для атрибутів */
+        .attribute-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background-color: #FDD95F;
+            color: #111827;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+<div layout:fragment="content">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+
+        <!-- Хлібні крихти -->
+        <nav class="mb-6 fade-in" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                <li>
+                    <a th:href="@{/{lang}(lang=${#locale.language})}"
+                       class="hover:text-gray-900 transition">
+                        Головна
+                    </a>
+                </li>
+                <li>
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </li>
+                <li>
+                    <a th:href="@{/{lang}/lessons(lang=${#locale.language})}"
+                       class="hover:text-gray-900 transition">
+                        Уроки
+                    </a>
+                </li>
+                <li>
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </li>
+                <li class="text-gray-900 font-medium truncate" th:text="${translation.title}">
+                    Назва уроку
+                </li>
+            </ol>
+        </nav>
+
+        <div class="grid lg:grid-cols-3 gap-8">
+            <!-- Основний контент -->
+            <div class="lg:col-span-2">
+                <!-- Заголовок -->
+                <header class="mb-8 fade-in">
+                    <!-- Головне зображення -->
+                    <div th:if="${lesson.mainImageUrl}" class="mb-6 rounded-xl overflow-hidden shadow-lg">
+                        <img th:src="${lesson.mainImageUrl}"
+                             th:alt="${translation.title}"
+                             class="w-full h-auto object-cover">
+                    </div>
+
+                    <h1 class="text-4xl font-bold text-gray-900 mb-4" th:text="${translation.title}">
+                        Назва уроку
+                    </h1>
+
+                    <!-- Атрибути уроку -->
+                    <div class="flex flex-wrap gap-2 mb-4" th:if="${lesson.attributes != null and !#lists.isEmpty(lesson.attributes)}">
+                            <span th:each="attr : ${lesson.attributes}"
+                                  class="attribute-badge"
+                                  th:text="${attr.textValue != null ? attr.textValue : (attr.numberValue != null ? attr.numberValue : '')}">
+                                Атрибут
+                            </span>
+                    </div>
+
+                    <!-- Мета-інформація -->
+                    <div class="flex items-center gap-6 text-sm text-gray-600">
+                        <!-- Рівень доступу -->
+                        <div class="flex items-center gap-2">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                            </svg>
+                            <span th:text="${lesson.accessLevel == T(entity.lesson.Lesson.AccessLevel).FREE ? 'Безкоштовно' : 'DLL Pro'}">
+                                    Безкоштовно
+                                </span>
+                        </div>
+
+                        <!-- Дата оновлення -->
+                        <div class="flex items-center gap-2" th:if="${lesson.updatedAt}">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <span>Оновлено: <span th:text="${lesson.updatedAt}">2024-01-01</span></span>
+                        </div>
+                    </div>
+                </header>
+
+                <!-- Опис уроку -->
+                <section class="mb-8 fade-in">
+                    <div class="prose prose-lg max-w-none lesson-content">
+                        <div th:utext="${translation.description}">
+                            <p>Опис уроку буде тут...</p>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Матеріали уроку -->
+                <section class="mb-8 fade-in" th:if="${lesson.materials != null and !#lists.isEmpty(lesson.materials)}">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-6">Матеріали уроку</h2>
+
+                    <div class="grid gap-4">
+                        <div th:each="material : ${lesson.materials}"
+                             class="material-card bg-white border border-gray-200 rounded-lg p-6 hover:border-warning">
+
+                            <!-- Іконка залежно від типу -->
+                            <div class="flex items-start gap-4">
+                                <div class="flex-shrink-0">
+                                    <!-- PDF -->
+                                    <svg th:if="${material.materialType == T(entity.lesson.LessonMaterial.MaterialType).PDF}"
+                                         class="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                    </svg>
+
+                                    <!-- LINK -->
+                                    <svg th:if="${material.materialType == T(entity.lesson.LessonMaterial.MaterialType).LINK}"
+                                         class="w-12 h-12 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+                                    </svg>
+
+                                    <!-- IMAGE -->
+                                    <svg th:if="${material.materialType == T(entity.lesson.LessonMaterial.MaterialType).IMAGE}"
+                                         class="w-12 h-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                    </svg>
+
+                                    <!-- TEXT_BLOCK -->
+                                    <svg th:if="${material.materialType == T(entity.lesson.LessonMaterial.MaterialType).TEXT_BLOCK}"
+                                         class="w-12 h-12 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                    </svg>
+                                </div>
+
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-semibold text-gray-900 mb-2"
+                                        th:text="${material.title}">
+                                        Назва матеріалу
+                                    </h3>
+
+                                    <!-- Для TEXT_BLOCK показуємо вміст -->
+                                    <div th:if="${material.materialType == T(entity.lesson.LessonMaterial.MaterialType).TEXT_BLOCK}"
+                                         class="text-gray-700"
+                                         th:utext="${material.content}">
+                                        Текстовий контент
+                                    </div>
+
+                                    <!-- Для IMAGE показуємо зображення -->
+                                    <div th:if="${material.materialType == T(entity.lesson.LessonMaterial.MaterialType).IMAGE}">
+                                        <img th:src="${material.content}"
+                                             th:alt="${material.title}"
+                                             class="rounded-lg max-w-full h-auto">
+                                    </div>
+
+                                    <!-- Для PDF та LINK показуємо кнопку -->
+                                    <a th:if="${material.materialType == T(entity.lesson.LessonMaterial.MaterialType).PDF or material.materialType == T(entity.lesson.LessonMaterial.MaterialType).LINK}"
+                                       th:href="${material.content}"
+                                       target="_blank"
+                                       class="inline-flex items-center gap-2 mt-3 px-4 py-2 bg-warning text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 transition">
+                                            <span th:text="${material.materialType == T(entity.lesson.LessonMaterial.MaterialType).PDF ? 'Завантажити PDF' : 'Відкрити посилання'}">
+                                                Відкрити
+                                            </span>
+                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                  d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/>
+                                        </svg>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </div>
+
+            <!-- Бічна панель -->
+            <aside class="lg:col-span-1">
+                <!-- Ціни (якщо платний урок) -->
+                <div class="bg-white rounded-xl shadow-lg p-6 mb-6 sticky top-4 fade-in"
+                     th:if="${lesson.accessLevel == T(entity.lesson.Lesson.AccessLevel).PAID}">
+                    <h3 class="text-xl font-bold text-gray-900 mb-4">Придбати урок</h3>
+
+                    <div class="space-y-3" th:if="${lesson.prices != null and !#lists.isEmpty(lesson.prices)}">
+                        <div th:each="price : ${lesson.prices}"
+                             class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                <span class="text-gray-700 font-medium"
+                                      th:text="${price.currency}">UAH</span>
+                            <span class="text-2xl font-bold text-gray-900">
+                                    <span th:text="${#numbers.formatDecimal(price.amountInMainUnits, 0, 2)}">100.00</span>
+                                    <span class="text-sm" th:text="${price.currency}">UAH</span>
+                                </span>
+                        </div>
+                    </div>
+
+                    <button class="w-full mt-4 bg-warning text-gray-900 font-semibold py-3 px-6 rounded-lg hover:bg-yellow-500 transition">
+                        Купити зараз
+                    </button>
+
+                    <div class="mt-4 text-center">
+                        <a href="#subscribe" class="text-sm text-gray-600 hover:text-gray-900">
+                            або підпишіться на DLL Pro
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Для безкоштовних уроків -->
+                <div class="bg-green-50 border-2 border-green-200 rounded-xl p-6 mb-6 sticky top-4 fade-in"
+                     th:if="${lesson.accessLevel == T(entity.lesson.Lesson.AccessLevel).FREE}">
+                    <div class="text-center">
+                        <svg class="w-16 h-16 text-green-500 mx-auto mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <h3 class="text-xl font-bold text-green-900 mb-2">Безкоштовно!</h3>
+                        <p class="text-green-700">
+                            Цей урок доступний безкоштовно для всіх користувачів
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Інформація про урок -->
+                <div class="bg-gray-50 rounded-xl p-6 mb-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">Про урок</h3>
+
+                    <div class="space-y-3 text-sm">
+                        <div class="flex items-center gap-3">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343l1.657-1.657a2 2 0 012.828 0l2.829 2.829a2 2 0 010 2.828l-8.486 8.485M7 17h.01"/>
+                            </svg>
+                            <div>
+                                <div class="text-gray-500">Матеріалів</div>
+                                <div class="font-semibold text-gray-900"
+                                     th:text="${lesson.materials != null ? #lists.size(lesson.materials) : 0}">0</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3" th:if="${lesson.createdAt}">
+                            <svg class="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                      d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                            </svg>
+                            <div>
+                                <div class="text-gray-500">Створено</div>
+                                <div class="font-semibold text-gray-900" th:text="${lesson.createdAt}">2024-01-01</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Кнопка "Додати в обране" -->
+                <button class="w-full bg-white border-2 border-gray-300 text-gray-900 font-semibold py-3 px-6 rounded-lg hover:border-warning hover:bg-warning transition flex items-center justify-center gap-2">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"/>
+                    </svg>
+                    <span>Додати в обране</span>
+                </button>
+            </aside>
+        </div>
+    </div>
+</div>
+</body>
+</html>

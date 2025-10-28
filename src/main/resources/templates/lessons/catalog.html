@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+<head>
+    <title th:text="${pageTitle}">Каталог уроків</title>
+
+    <!-- Додаткові стилі для цієї сторінки -->
+    <style>
+        /* Обмеження тексту до 3 рядків */
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* Плавна поява карток */
+        .lesson-card {
+            opacity: 0;
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+
+        .lesson-card:nth-child(1) { animation-delay: 0.1s; }
+        .lesson-card:nth-child(2) { animation-delay: 0.15s; }
+        .lesson-card:nth-child(3) { animation-delay: 0.2s; }
+        .lesson-card:nth-child(4) { animation-delay: 0.25s; }
+        .lesson-card:nth-child(n+5) { animation-delay: 0.3s; }
+    </style>
+</head>
+
+<body>
+<!-- Основний контент сторінки -->
+<div layout:fragment="content">
+    <div class="container mx-auto px-4 py-8">
+
+        <!-- Хлібні крихти -->
+        <nav class="mb-6 fade-in" aria-label="Breadcrumb">
+            <ol class="flex items-center space-x-2 text-sm text-gray-600">
+                <li>
+                    <a th:href="@{/{lang}(lang=${#locale.language})}"
+                       class="hover:text-gray-900 transition">
+                        Головна
+                    </a>
+                </li>
+                <li>
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                </li>
+                <li class="text-gray-900 font-medium">
+                    Уроки
+                </li>
+            </ol>
+        </nav>
+
+        <!-- Заголовок сторінки -->
+        <header class="mb-8 fade-in">
+            <h1 class="text-4xl font-bold text-gray-900 mb-2" th:text="${pageTitle}">
+                Всі уроки
+            </h1>
+            <p class="text-gray-600 text-lg">
+                Перегляньте нашу колекцію з
+                <span class="font-semibold text-gray-900" th:text="${#lists.size(lessonCards)}">0</span>
+                <span th:text="${#lists.size(lessonCards) == 1 ? 'урок' : (#lists.size(lessonCards) < 5 ? 'уроки' : 'уроків')}">уроків</span>
+            </p>
+        </header>
+
+        <!-- Фільтри (опціонально) -->
+        <div class="mb-8 p-6 bg-gray-50 rounded-xl fade-in" th:if="${showFilters}" x-data="{ isOpen: true }">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-lg font-semibold text-gray-900">Фільтри</h2>
+                <button @click="isOpen = !isOpen" class="text-gray-600 hover:text-gray-900">
+                    <svg class="w-5 h-5" :class="{'rotate-180': !isOpen}" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                    </svg>
+                </button>
+            </div>
+
+            <div x-show="isOpen" x-collapse class="flex flex-wrap gap-4">
+                <div class="flex-1 min-w-[200px]">
+                    <label for="levelFilter" class="block text-sm font-medium text-gray-700 mb-2">
+                        Рівень складності:
+                    </label>
+                    <select id="levelFilter"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning focus:border-warning transition">
+                        <option value="">Всі рівні</option>
+                        <option value="A1">A1 - Початковий</option>
+                        <option value="A2">A2 - Елементарний</option>
+                        <option value="B1">B1 - Середній</option>
+                        <option value="B2">B2 - Вище середнього</option>
+                        <option value="C1">C1 - Просунутий</option>
+                        <option value="C2">C2 - Досконалий</option>
+                    </select>
+                </div>
+
+                <div class="flex-1 min-w-[200px]">
+                    <label for="accessFilter" class="block text-sm font-medium text-gray-700 mb-2">
+                        Тип доступу:
+                    </label>
+                    <select id="accessFilter"
+                            class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-warning focus:border-warning transition">
+                        <option value="">Всі</option>
+                        <option value="FREE">Безкоштовні</option>
+                        <option value="PAID">Тільки Pro</option>
+                    </select>
+                </div>
+
+                <div class="flex items-end">
+                    <button id="resetFilters"
+                            class="px-6 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition">
+                        Скинути
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Лічильник результатів -->
+        <div class="mb-6 fade-in">
+            <p class="text-gray-600">
+                Знайдено: <span id="visibleCount" class="font-semibold text-gray-900" th:text="${#lists.size(lessonCards)}">0</span>
+                <span th:text="${#lists.size(lessonCards) == 1 ? 'урок' : (#lists.size(lessonCards) < 5 ? 'уроки' : 'уроків')}">уроків</span>
+            </p>
+        </div>
+
+        <!-- Сітка карток уроків -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="lessonGrid">
+            <div th:each="card, iterStat : ${lessonCards}" class="lesson-card">
+                <div th:replace="~{fragments/lesson-card :: lesson-card(lesson=${card})}"></div>
+            </div>
+        </div>
+
+        <!-- Повідомлення, якщо уроків немає -->
+        <div th:if="${#lists.isEmpty(lessonCards)}"
+             class="text-center py-16 fade-in">
+            <svg class="mx-auto h-20 w-20 text-gray-300 mb-4"
+                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <h3 class="text-2xl font-semibold text-gray-900 mb-2">
+                Уроки не знайдено
+            </h3>
+            <p class="text-gray-600 mb-6 max-w-md mx-auto">
+                На даний момент немає доступних уроків для цієї мови. Спробуйте пізніше або виберіть іншу мову.
+            </p>
+            <a th:href="@{/{lang}(lang=${#locale.language})}"
+               class="inline-flex items-center px-6 py-3 bg-warning text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 transition">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                Повернутися на головну
+            </a>
+        </div>
+
+        <!-- Повідомлення про відсутність результатів фільтрації -->
+        <div id="noResults" class="text-center py-16 hidden">
+            <svg class="mx-auto h-20 w-20 text-gray-300 mb-4"
+                 fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5"
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+            <h3 class="text-2xl font-semibold text-gray-900 mb-2">
+                Нічого не знайдено
+            </h3>
+            <p class="text-gray-600 mb-6">
+                Спробуйте змінити критерії фільтрації
+            </p>
+            <button id="clearFilters"
+                    class="inline-flex items-center px-6 py-3 bg-warning text-gray-900 font-semibold rounded-lg hover:bg-yellow-500 transition">
+                Скинути фільтри
+            </button>
+        </div>
+
+        <!-- Пагінація (якщо потрібна) -->
+        <div th:if="${totalPages != null and totalPages > 1}"
+             class="mt-12 flex justify-center fade-in">
+            <nav class="flex items-center gap-2">
+                <!-- Попередня сторінка -->
+                <a th:href="@{/{lang}/lessons(lang=${#locale.language}, page=${currentPage - 1})}"
+                   th:if="${currentPage > 0}"
+                   class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/>
+                    </svg>
+                </a>
+
+                <!-- Номери сторінок -->
+                <a th:each="page : ${#numbers.sequence(0, totalPages - 1)}"
+                   th:href="@{/{lang}/lessons(lang=${#locale.language}, page=${page})}"
+                   th:text="${page + 1}"
+                   th:class="${page == currentPage} ?
+                                 'px-4 py-2 bg-warning text-gray-900 font-semibold rounded-lg' :
+                                 'px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition'">
+                    1
+                </a>
+
+                <!-- Наступна сторінка -->
+                <a th:href="@{/{lang}/lessons(lang=${#locale.language}, page=${currentPage + 1})}"
+                   th:if="${currentPage < totalPages - 1}"
+                   class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                    </svg>
+                </a>
+            </nav>
+        </div>
+
+    </div>
+</div>
+
+<!-- Додаткові скрипти для цієї сторінки -->
+<th:block layout:fragment="scripts">
+    <script>
+        // Фільтрація на стороні клієнта
+        document.addEventListener('DOMContentLoaded', function() {
+            const levelFilter = document.getElementById('levelFilter');
+            const accessFilter = document.getElementById('accessFilter');
+            const resetButton = document.getElementById('resetFilters');
+            const clearButton = document.getElementById('clearFilters');
+            const visibleCountSpan = document.getElementById('visibleCount');
+            const noResults = document.getElementById('noResults');
+            const lessonGrid = document.getElementById('lessonGrid');
+
+            function filterLessons() {
+                const selectedLevel = levelFilter?.value || '';
+                const selectedAccess = accessFilter?.value || '';
+
+                // Отримуємо всі картки
+                const cards = lessonGrid.querySelectorAll('.lesson-card');
+                let visibleCount = 0;
+
+                cards.forEach(card => {
+                    // Знаходимо badge з рівнем
+                    const levelBadge = card.querySelector('.absolute.top-2.right-2 span');
+                    const cardLevel = levelBadge?.textContent.trim() || '';
+
+                    // Знаходимо текст з access level
+                    const accessSpan = card.querySelector('.flex.items-center.justify-between > span:last-child');
+                    const cardAccess = accessSpan?.textContent.trim() || '';
+
+                    let showCard = true;
+
+                    // Фільтр за рівнем
+                    if (selectedLevel && !cardLevel.includes(selectedLevel)) {
+                        showCard = false;
+                    }
+
+                    // Фільтр за типом доступу
+                    if (selectedAccess === 'FREE' && !cardAccess.includes('Free')) {
+                        showCard = false;
+                    } else if (selectedAccess === 'PAID' && !cardAccess.includes('Pro')) {
+                        showCard = false;
+                    }
+
+                    // Показуємо/ховаємо картку
+                    card.style.display = showCard ? 'block' : 'none';
+                    if (showCard) visibleCount++;
+                });
+
+                // Оновлюємо лічильник
+                if (visibleCountSpan) {
+                    visibleCountSpan.textContent = visibleCount;
+                }
+
+                // Показуємо повідомлення про відсутність результатів
+                if (noResults && lessonGrid) {
+                    if (visibleCount === 0) {
+                        lessonGrid.style.display = 'none';
+                        noResults.classList.remove('hidden');
+                    } else {
+                        lessonGrid.style.display = 'grid';
+                        noResults.classList.add('hidden');
+                    }
+                }
+            }
+
+            function resetFilters() {
+                if (levelFilter) levelFilter.value = '';
+                if (accessFilter) accessFilter.value = '';
+                filterLessons();
+            }
+
+            // Додаємо обробники подій
+            if (levelFilter) {
+                levelFilter.addEventListener('change', filterLessons);
+            }
+
+            if (accessFilter) {
+                accessFilter.addEventListener('change', filterLessons);
+            }
+
+            if (resetButton) {
+                resetButton.addEventListener('click', resetFilters);
+            }
+
+            if (clearButton) {
+                clearButton.addEventListener('click', resetFilters);
+            }
+        });
+    </script>
+</th:block>
+
+</body>
+</html>
