@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin}">
+<head>
+    <title th:text="${isEdit} ? 'Edit Lesson' : 'Create Lesson'">Lesson Form</title>
+</head>
+<body>
+
+<div layout:fragment="content" x-data="lessonForm()">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <a href="/admin/lessons" class="text-blue-600 hover:text-blue-700 flex items-center mb-4">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Назад до списку
+        </a>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2"
+            th:text="${isEdit} ? 'Редагування уроку' : 'Створення уроку'">Створення уроку</h2>
+        <p class="text-gray-600">Заповніть форму для створення або редагування уроку</p>
+    </div>
+
+    <!-- Error Messages -->
+    <div th:if="${error}"
+         class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+        <p th:text="${error}"></p>
+    </div>
+
+    <form method="post"
+          th:action="${isEdit} ? @{/admin/lessons/edit/{id}(id=${lesson.id})} : @{/admin/lessons/create}"
+          th:object="${lesson}"
+          class="space-y-6">
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">Основна інформація</h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="md:col-span-2">
+                    <label for="mainImageUrl" class="block text-sm font-semibold text-gray-900 mb-2">
+                        URL зображення
+                    </label>
+                    <input type="url"
+                           id="mainImageUrl"
+                           th:field="*{mainImageUrl}"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                           placeholder="https://example.com/image.jpg">
+                </div>
+
+                <div>
+                    <label for="accessLevel" class="block text-sm font-semibold text-gray-900 mb-2">
+                        Тип доступу <span class="text-red-500">*</span>
+                    </label>
+                    <select id="accessLevel"
+                            th:field="*{accessLevel}"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                            required>
+                        <option th:each="level : ${accessLevels}"
+                                th:value="${level}"
+                                th:text="${level}">Access Level</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8" x-data="{ activeTab: 'uk' }">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">Переклади</h3>
+
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="flex space-x-4">
+                    <button type="button"
+                            @click="activeTab = 'uk'"
+                            :class="activeTab === 'uk' ? 'border-warning text-warning' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="py-2 px-4 border-b-2 font-semibold transition">
+                        🇺🇦 Українська
+                    </button>
+                    <button type="button"
+                            @click="activeTab = 'en'"
+                            :class="activeTab === 'en' ? 'border-warning text-warning' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="py-2 px-4 border-b-2 font-semibold transition">
+                        🇬🇧 English
+                    </button>
+                    <button type="button"
+                            @click="activeTab = 'de'"
+                            :class="activeTab === 'de' ? 'border-warning text-warning' : 'border-transparent text-gray-500 hover:text-gray-700'"
+                            class="py-2 px-4 border-b-2 font-semibold transition">
+                        🇩🇪 Deutsch
+                    </button>
+                </nav>
+            </div>
+
+            <div>
+                <div x-show="activeTab === 'uk'" class="space-y-4">
+                    <input type="hidden" th:field="*{translations['uk'].lang}">
+                    <input type="hidden" th:field="*{translations['uk'].id}">
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Назва <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               th:field="*{translations['uk'].title}"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                               required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Опис
+                        </label>
+                        <textarea rows="4"
+                                  th:field="*{translations['uk'].description}"
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Meta опис (SEO)
+                        </label>
+                        <textarea rows="2"
+                                  th:field="*{translations['uk'].metaDescription}"
+                                  maxlength="160"
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Максимум 160 символів</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Slug (URL) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               th:field="*{translations['uk'].slug}"
+                               pattern="[a-z0-9-]+"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition font-mono"
+                               required>
+                        <p class="text-xs text-gray-500 mt-1">Тільки малі літери, цифри та дефіси</p>
+                    </div>
+                </div>
+
+                <div x-show="activeTab === 'en'" class="space-y-4" style="display: none;">
+                    <input type="hidden" th:field="*{translations['en'].lang}">
+                    <input type="hidden" th:field="*{translations['en'].id}">
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Title <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               th:field="*{translations['en'].title}"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                               required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Description
+                        </label>
+                        <textarea rows="4"
+                                  th:field="*{translations['en'].description}"
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Meta description (SEO)
+                        </label>
+                        <textarea rows="2"
+                                  th:field="*{translations['en'].metaDescription}"
+                                  maxlength="160"
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Maximum 160 characters</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Slug (URL) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               th:field="*{translations['en'].slug}"
+                               pattern="[a-z0-9-]+"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition font-mono"
+                               required>
+                        <p class="text-xs text-gray-500 mt-1">Only lowercase letters, numbers and hyphens</p>
+                    </div>
+                </div>
+
+                <div x-show="activeTab === 'de'" class="space-y-4" style="display: none;">
+                    <input type="hidden" th:field="*{translations['de'].lang}">
+                    <input type="hidden" th:field="*{translations['de'].id}">
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Titel <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               th:field="*{translations['de'].title}"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                               required>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Beschreibung
+                        </label>
+                        <textarea rows="4"
+                                  th:field="*{translations['de'].description}"
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"></textarea>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Meta-Beschreibung (SEO)
+                        </label>
+                        <textarea rows="2"
+                                  th:field="*{translations['de'].metaDescription}"
+                                  maxlength="160"
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Maximal 160 Zeichen</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                            Slug (URL) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               th:field="*{translations['de'].slug}"
+                               pattern="[a-z0-9-]+"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition font-mono"
+                               required>
+                        <p class="text-xs text-gray-500 mt-1">Nur Kleinbuchstaben, Zahlen und Bindestriche</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-4">
+            <a href="/admin/lessons"
+               class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
+                Скасувати
+            </a>
+            <button type="submit"
+                    class="px-6 py-3 bg-warning text-gray-900 rounded-lg font-semibold hover:bg-yellow-500 transition">
+                <span th:text="${isEdit} ? 'Зберегти зміни' : 'Створити урок'">Створити</span>
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<!-- Alpine.js Script -->
+<th:block layout:fragment="scripts">
+    <script>
+        function lessonForm() {
+            return {
+                init() {
+                    console.log('Lesson form initialized');
+                }
+            }
+        }
+    </script>
+</th:block>
+
+</body>
+</html>

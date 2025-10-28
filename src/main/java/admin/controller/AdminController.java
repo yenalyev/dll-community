@@ -47,18 +47,18 @@ public class AdminController {
         return "admin/users";
     }
 
-    /**
-     * Управління уроками
-     * URL: /admin/lessons
-     */
-    @GetMapping("/lessons")
-    public String manageLessons(Model model) {
-        log.info("Admin lessons page accessed");
-
-        model.addAttribute("pageTitle", "Manage Lessons");
-
-        return "admin/lessons";
-    }
+//    /**
+//     * Управління уроками
+//     * URL: /admin/lessons
+//     */
+//    @GetMapping("/lessons")
+//    public String manageLessons(Model model) {
+//        log.info("Admin lessons page accessed");
+//
+//        model.addAttribute("pageTitle", "Manage Lessons");
+//
+//        return "admin/lessons";
+//    }
 
     /**
      * Управління замовленнями
