@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin}">
+<head>
+    <title th:text="${isEdit} ? 'Edit Attribute' : 'Create Attribute'">Attribute Form</title>
+</head>
+<body>
+
+<div layout:fragment="content" x-data="attributeForm()">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <a href="/admin/attributes" class="text-blue-600 hover:text-blue-700 flex items-center mb-4">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Назад до списку
+        </a>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2"
+            th:text="${isEdit} ? 'Редагування атрибута' : 'Створення атрибута'">Створення атрибута</h2>
+        <p class="text-gray-600">Заповніть форму для створення або редагування атрибута</p>
+    </div>
+
+    <!-- Error Messages -->
+    <div th:if="${error}"
+         class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+        <p th:text="${error}"></p>
+    </div>
+
+    <!-- Form -->
+    <form method="post"
+          th:action="${isEdit} ? @{/admin/attributes/edit/{id}(id=${attribute.id})} : @{/admin/attributes/create}"
+          th:object="${attribute}"
+          @submit="prepareSubmit"
+          class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+        <!-- Basic Information Section -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                Основна інформація
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- System Name -->
+                <div>
+                    <label for="name" class="block text-sm font-semibold text-gray-900 mb-2">
+                        Системна назва (slug) <span class="text-red-500">*</span>
+                    </label>
+                    <input type="text"
+                           id="name"
+                           th:field="*{name}"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition font-mono"
+                           placeholder="language_level"
+                           required>
+                    <p class="text-xs text-gray-500 mt-1">Англійською без пробілів, наприклад: language_level</p>
+                    <p th:if="${#fields.hasErrors('name')}"
+                       th:errors="*{name}"
+                       class="text-xs text-red-600 mt-1"></p>
+                </div>
+
+                <!-- Type -->
+                <div>
+                    <label for="type" class="block text-sm font-semibold text-gray-900 mb-2">
+                        Тип поля <span class="text-red-500">*</span>
+                    </label>
+                    <select id="type"
+                            th:field="*{type}"
+                            x-model="attributeType"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                            required>
+                        <option value="">Оберіть тип</option>
+                        <option th:each="type : ${attributeTypes}"
+                                th:value="${type}"
+                                th:text="${type}">Type</option>
+                    </select>
+                    <p th:if="${#fields.hasErrors('type')}"
+                       th:errors="*{type}"
+                       class="text-xs text-red-600 mt-1"></p>
+                </div>
+
+                <!-- Sort Order -->
+                <div>
+                    <label for="sortOrder" class="block text-sm font-semibold text-gray-900 mb-2">
+                        Порядок сортування
+                    </label>
+                    <input type="number"
+                           id="sortOrder"
+                           th:field="*{sortOrder}"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                           placeholder="0">
+                    <p class="text-xs text-gray-500 mt-1">Менше число = вище в списку</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Translations Section -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129"/>
+                </svg>
+                Переклади назви атрибута
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div th:each="lang : ${availableLanguages}">
+                    <label th:for="'translation_' + ${lang}"
+                           class="block text-sm font-semibold text-gray-900 mb-2">
+                        <span th:text="${lang == 'uk' ? '🇺🇦 Українська' : (lang == 'en' ? '🇬🇧 English' : '🇩🇪 Deutsch')}"></span>
+                    </label>
+                    <input type="text"
+                           th:id="'translation_' + ${lang}"
+                           th:name="'translations[' + ${lang} + ']'"
+                           th:value="${attribute.translations[lang]}"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                           th:placeholder="${lang == 'uk' ? 'Рівень мови' : (lang == 'en' ? 'Language Level' : 'Sprachniveau')}">
+                </div>
+            </div>
+        </div>
+
+        <!-- Placements Section -->
+        <div class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                <svg class="w-6 h-6 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                </svg>
+                Місця розміщення
+            </h3>
+
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div th:each="placement : ${placements}" class="flex items-center">
+                    <input type="checkbox"
+                           th:id="'placement_' + ${placement.id}"
+                           th:name="'placementIds'"
+                           th:value="${placement.id}"
+                           th:checked="${#lists.contains(attribute.placementIds, placement.id)}"
+                           class="w-4 h-4 text-warning border-gray-300 rounded focus:ring-warning">
+                    <label th:for="'placement_' + ${placement.id}"
+                           class="ml-2 text-sm text-gray-700 cursor-pointer">
+                        <span th:text="${placement.key}"></span>
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <!-- Options Section (for select/multiselect) -->
+        <div x-show="attributeType === 'select' || attributeType === 'multiselect'"
+             x-transition
+             class="mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4 flex items-center justify-between">
+                <span class="flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    Опції вибору
+                </span>
+                <button type="button"
+                        @click="addOption"
+                        class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition text-sm flex items-center">
+                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Додати опцію
+                </button>
+            </h3>
+
+            <div class="space-y-4">
+                <!-- Existing options from server -->
+                <template th:each="option, iterStat : ${attribute.options}">
+                    <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-gray-300 transition"
+                         x-data="{ expanded: true }">
+
+                        <!-- Hidden ID field -->
+                        <input type="hidden"
+                               th:name="'options[' + ${iterStat.index} + '].id'"
+                               th:value="${option.id}">
+
+                        <!-- Option Header -->
+                        <div class="flex items-center justify-between mb-3">
+                            <button type="button"
+                                    @click="expanded = !expanded"
+                                    class="flex items-center text-sm font-semibold text-gray-900">
+                                <svg class="w-5 h-5 mr-2 transition-transform"
+                                     :class="expanded ? 'rotate-90' : ''"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                <span th:text="'Опція #' + ${iterStat.index + 1}">Опція</span>
+                            </button>
+                            <button type="button"
+                                    @click="$el.closest('.border-2').remove()"
+                                    class="text-red-600 hover:text-red-800 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Option Content -->
+                        <div x-show="expanded" x-collapse>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                <!-- Value -->
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        Системне значення <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text"
+                                           th:name="'options[' + ${iterStat.index} + '].value'"
+                                           th:value="${option.value}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-warning transition font-mono text-sm"
+                                           placeholder="a1"
+                                           required>
+                                </div>
+
+                                <!-- Sort Order -->
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        Порядок
+                                    </label>
+                                    <input type="number"
+                                           th:name="'options[' + ${iterStat.index} + '].sortOrder'"
+                                           th:value="${option.sortOrder}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-warning transition text-sm"
+                                           placeholder="0">
+                                </div>
+                            </div>
+
+                            <!-- Translations -->
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div th:each="lang : ${availableLanguages}">
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        <span th:text="${lang == 'uk' ? '🇺🇦 UA' : (lang == 'en' ? '🇬🇧 EN' : '🇩🇪 DE')}"></span>
+                                    </label>
+                                    <input type="text"
+                                           th:name="'options[' + ${iterStat.index} + '].translations[' + ${lang} + ']'"
+                                           th:value="${option.translations[lang]}"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-warning transition text-sm"
+                                           th:placeholder="${lang == 'uk' ? 'A1' : lang}">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <!-- Dynamic options container -->
+                <div id="dynamicOptionsContainer"></div>
+
+                <!-- Empty state -->
+                <div x-show="attributeType === 'select' || attributeType === 'multiselect'"
+                     x-cloak
+                     class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg"
+                     style="display: none;"
+                     :style="document.querySelectorAll('.border-2.border-gray-200').length === 0 ? '' : 'display: none;'">
+                    <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                    </svg>
+                    <p>Опцій поки немає. Натисніть "Додати опцію" для створення</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="flex items-center justify-end gap-4 pt-6 border-t">
+            <a href="/admin/attributes"
+               class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
+                Скасувати
+            </a>
+            <button type="submit"
+                    class="px-6 py-3 bg-warning text-gray-900 rounded-lg font-semibold hover:bg-yellow-500 transition">
+                <span th:text="${isEdit} ? 'Зберегти зміни' : 'Створити атрибут'">Створити</span>
+            </button>
+        </div>
+    </form>
+
+</div>
+
+<!-- Alpine.js Script -->
+<th:block layout:fragment="scripts">
+    <script th:inline="javascript">
+        function attributeForm() {
+            return {
+                attributeType: /*[[${attribute.type}]]*/ '',
+                optionCounter: /*[[${#lists.size(attribute.options)}]]*/ 0,
+                availableLanguages: /*[[${availableLanguages}]]*/ ['uk', 'en', 'de'],
+
+                addOption() {
+                    const container = document.getElementById('dynamicOptionsContainer');
+                    const index = this.optionCounter++;
+
+                    const optionHtml = `
+                    <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-gray-300 transition" x-data="{ expanded: true }">
+                        <!-- Option Header -->
+                        <div class="flex items-center justify-between mb-3">
+                            <button type="button"
+                                    @click="expanded = !expanded"
+                                    class="flex items-center text-sm font-semibold text-gray-900">
+                                <svg class="w-5 h-5 mr-2 transition-transform"
+                                     :class="expanded ? 'rotate-90' : ''"
+                                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
+                                </svg>
+                                Нова опція #${index + 1}
+                            </button>
+                            <button type="button"
+                                    onclick="this.closest('.border-2').remove()"
+                                    class="text-red-600 hover:text-red-800 transition">
+                                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+
+                        <!-- Option Content -->
+                        <div x-show="expanded" x-collapse>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                        Системне значення <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text"
+                                           name="options[${index}].value"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-warning transition font-mono text-sm"
+                                           placeholder="value"
+                                           required>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-semibold text-gray-700 mb-1">Порядок</label>
+                                    <input type="number"
+                                           name="options[${index}].sortOrder"
+                                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-warning transition text-sm"
+                                           placeholder="0">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                ${this.availableLanguages.map(lang => `
+                                    <div>
+                                        <label class="block text-xs font-semibold text-gray-700 mb-1">
+                                            ${lang === 'uk' ? '🇺🇦 UA' : lang === 'en' ? '🇬🇧 EN' : '🇩🇪 DE'}
+                                        </label>
+                                        <input type="text"
+                                               name="options[${index}].translations[${lang}]"
+                                               class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:border-warning transition text-sm"
+                                               placeholder="${lang.toUpperCase()}">
+                                    </div>
+                                `).join('')}
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+                    container.insertAdjacentHTML('beforeend', optionHtml);
+                },
+
+                prepareSubmit(event) {
+                    // Можна додати додаткову логіку перед відправкою форми
+                    console.log('Form submitted');
+                }
+            }
+        }
+    </script>
+</th:block>
+
+</body>
+</html>

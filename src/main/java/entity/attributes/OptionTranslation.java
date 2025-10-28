@@ -27,4 +27,21 @@ public class OptionTranslation {
 
     @Column(name = "label", nullable = false)
     private String label; // Назва для користувача, наприклад: "Початковий (А1)"
+
+    /**
+     * Унікальність: одна мова на одну опцію
+     */
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OptionTranslation)) return false;
+        OptionTranslation that = (OptionTranslation) o;
+        return option != null && option.equals(that.option) &&
+                langCode != null && langCode.equals(that.langCode);
+    }
+
+    @Override
+    public int hashCode() {
+        return getClass().hashCode();
+    }
 }

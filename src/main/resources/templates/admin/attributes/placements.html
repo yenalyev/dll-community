@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin}">
+<head>
+    <title>Attribute Placements</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <a href="/admin/attributes" class="text-blue-600 hover:text-blue-700 flex items-center mb-4">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+            </svg>
+            Назад до атрибутів
+        </a>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Типи розміщення атрибутів</h2>
+        <p class="text-gray-600">Управління місцями відображення атрибутів на сайті</p>
+    </div>
+
+    <!-- Success/Error Messages -->
+    <div th:if="${success}"
+         class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded">
+        <p th:text="${success}"></p>
+    </div>
+
+    <div th:if="${error}"
+         class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+        <p th:text="${error}"></p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+        <!-- Create Form -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-6">
+                <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
+                    <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Створити тип розміщення
+                </h3>
+
+                <form method="post"
+                      th:action="@{/admin/attributes/placements/create}"
+                      th:object="${newPlacement}">
+
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+
+                    <!-- Key -->
+                    <div class="mb-4">
+                        <label for="key" class="block text-sm font-semibold text-gray-900 mb-2">
+                            Ключ <span class="text-red-500">*</span>
+                        </label>
+                        <input type="text"
+                               id="key"
+                               th:field="*{key}"
+                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition font-mono"
+                               placeholder="product_card"
+                               required>
+                        <p class="text-xs text-gray-500 mt-1">Англійською без пробілів, snake_case</p>
+                        <p th:if="${#fields.hasErrors('key')}"
+                           th:errors="*{key}"
+                           class="text-xs text-red-600 mt-1"></p>
+                    </div>
+
+                    <!-- Description -->
+                    <div class="mb-6">
+                        <label for="description" class="block text-sm font-semibold text-gray-900 mb-2">
+                            Опис
+                        </label>
+                        <textarea id="description"
+                                  th:field="*{description}"
+                                  rows="3"
+                                  class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                  placeholder="Наприклад: Відображається на картці товару"></textarea>
+                        <p class="text-xs text-gray-500 mt-1">Додатковий опис для розуміння призначення</p>
+                    </div>
+
+                    <button type="submit"
+                            class="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition flex items-center justify-center">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        Створити
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Placements List -->
+        <div class="lg:col-span-2">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-bold text-gray-900 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 5a1 1 0 011-1h14a1 1 0 011 1v2a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM4 13a1 1 0 011-1h6a1 1 0 011 1v6a1 1 0 01-1 1H5a1 1 0 01-1-1v-6zM16 13a1 1 0 011-1h2a1 1 0 011 1v6a1 1 0 01-1 1h-2a1 1 0 01-1-1v-6z"/>
+                        </svg>
+                        Існуючі типи розміщень
+                        <span class="ml-2 text-sm font-normal text-gray-500">
+                            (<span th:text="${#lists.size(placements)}">0</span>)
+                        </span>
+                    </h3>
+                </div>
+
+                <div class="divide-y divide-gray-200">
+                    <!-- Empty State -->
+                    <div th:if="${placements.empty}" class="p-12 text-center">
+                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"/>
+                        </svg>
+                        <p class="text-lg font-medium text-gray-900 mb-1">Типів розміщень поки немає</p>
+                        <p class="text-sm text-gray-500">Створіть перший тип, використовуючи форму зліва</p>
+                    </div>
+
+                    <!-- Placement Items -->
+                    <div th:each="placement : ${placements}"
+                         class="p-6 hover:bg-gray-50 transition">
+                        <div class="flex items-start justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center mb-2">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-purple-100 text-purple-800 font-mono mr-3">
+                                        <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/>
+                                        </svg>
+                                        <span th:text="${placement.key}">key</span>
+                                    </span>
+                                    <span class="text-xs text-gray-500">
+                                        ID: <span th:text="${placement.id}">1</span>
+                                    </span>
+                                </div>
+
+                                <p th:if="${placement.description}"
+                                   class="text-sm text-gray-600"
+                                   th:text="${placement.description}">
+                                    Опис розміщення
+                                </p>
+                                <p th:unless="${placement.description}"
+                                   class="text-sm text-gray-400 italic">
+                                    Опис відсутній
+                                </p>
+                            </div>
+
+                            <!-- Delete Button -->
+                            <form th:action="@{/admin/attributes/placements/delete/{id}(id=${placement.id})}"
+                                  method="post"
+                                  onsubmit="return confirm('Ви впевнені, що хочете видалити цей тип розміщення? Це може вплинути на існуючі атрибути.');"
+                                  class="ml-4">
+                                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                                <button type="submit"
+                                        class="p-2 text-red-600 hover:bg-red-50 rounded-lg transition">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                    </svg>
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Info Box -->
+            <div class="mt-6 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+                <div class="flex">
+                    <svg class="h-5 w-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div class="text-sm text-blue-700">
+                        <p class="font-semibold mb-1">Що таке типи розміщень?</p>
+                        <p>Типи розміщень визначають, де на сайті будуть відображатися атрибути. Наприклад:</p>
+                        <ul class="list-disc list-inside mt-2 space-y-1">
+                            <li><strong>product_card</strong> - атрибут показується на картці товару</li>
+                            <li><strong>filters</strong> - атрибут використовується для фільтрації</li>
+                            <li><strong>hidden</strong> - атрибут прихований від користувачів</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
