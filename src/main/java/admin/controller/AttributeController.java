@@ -179,7 +179,8 @@ public class AttributeController {
 
         try {
             AttributeDto updated = attributeService.updateAttribute(id, dto);
-            log.info("Attribute updated successfully: id={}", updated.getId());
+            log.info("Attribute updated successfully: id={}, placements={}",
+                    updated.getId(), updated.getPlacementIds());
 
             redirectAttributes.addFlashAttribute("success", "Attribute updated successfully!");
             return "redirect:/admin/attributes";

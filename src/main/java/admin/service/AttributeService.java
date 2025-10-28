@@ -340,6 +340,15 @@ public class AttributeService {
             dto.setTranslations(translations);
         }
 
+        // МАПІНГ PLACEMENTS
+        if (attribute.getPlacements() != null && !attribute.getPlacements().isEmpty()) {
+            List<Integer> placementIds = new ArrayList<>();
+            for (AttributePlacement placement : attribute.getPlacements()) {
+                placementIds.add(placement.getId());
+            }
+            dto.setPlacementIds(placementIds);
+        }
+
         return dto;
     }
 
@@ -414,6 +423,9 @@ public class AttributeService {
 
         // Мапінг перекладів
         updateTranslations(attribute, dto.getTranslations());
+
+        //  Мапінг PLACEMENTS
+        updatePlacements(attribute, dto.getPlacementIds());
 
         // Мапінг опцій (якщо є)
         if (dto.getOptions() != null) {
@@ -566,5 +578,30 @@ public class AttributeService {
         dto.setKey(placement.getKey());
         dto.setDescription(placement.getDescription());
         return dto;
+    }
+
+
+    /**
+     * Оновлення placements атрибута
+     */
+    private void updatePlacements(Attribute attribute, List<Integer> placementIds) {
+        if (attribute.getPlacements() == null) {
+            attribute.setPlacements(new HashSet<>());
+        }
+
+        // Очищуємо старі placements
+        attribute.getPlacements().clear();
+
+        // Додаємо нові
+        if (placementIds != null && !placementIds.isEmpty()) {
+            for (Integer placementId : placementIds) {
+                placementRepository.findById(placementId).ifPresent(placement -> {
+                    attribute.getPlacements().add(placement);
+                });
+            }
+        }
+
+        log.debug("Updated placements for attribute {}. New count: {}",
+                attribute.getId(), attribute.getPlacements().size());
     }
 }

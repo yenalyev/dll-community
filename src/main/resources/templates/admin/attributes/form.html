@@ -138,9 +138,9 @@
                 <div th:each="placement : ${placements}" class="flex items-center">
                     <input type="checkbox"
                            th:id="'placement_' + ${placement.id}"
-                           th:name="'placementIds'"
+                           name="placementIds"
                            th:value="${placement.id}"
-                           th:checked="${#lists.contains(attribute.placementIds, placement.id)}"
+                           th:checked="${attribute.placementIds != null && #lists.contains(attribute.placementIds, placement.id)}"
                            class="w-4 h-4 text-warning border-gray-300 rounded focus:ring-warning">
                     <label th:for="'placement_' + ${placement.id}"
                            class="ml-2 text-sm text-gray-700 cursor-pointer">

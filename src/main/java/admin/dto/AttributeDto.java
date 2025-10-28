@@ -32,4 +32,11 @@ public class AttributeDto {
     // Опції для select/multiselect
     @Valid
     private List<AttributeOptionDto> options = new ArrayList<>();
+
+    // Helper method для ініціалізації з entity
+    public void addPlacementId(Integer id) {
+        if (id != null && !placementIds.contains(id)) {
+            placementIds.add(id);
+        }
+    }
 }
