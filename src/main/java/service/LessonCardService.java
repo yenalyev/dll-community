@@ -121,10 +121,10 @@ public class LessonCardService {
         if (lesson.getAttributes() != null && !lesson.getAttributes().isEmpty()) {
             // Розділяємо атрибути за placement
             List<String> cardHeaderAttributes = extractAttributesByPlacement(
-                    lesson.getAttributes(), "card_header", lang
+                    lesson.getAttributes(), "product_card_head", lang
             );
             List<String> cardBodyAttributes = extractAttributesByPlacement(
-                    lesson.getAttributes(), "card_body", lang
+                    lesson.getAttributes(), "product_card", lang
             );
 
             dto.setCardHeaderAttributes(cardHeaderAttributes);
