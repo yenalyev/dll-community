@@ -29,8 +29,9 @@ public class LessonDto {
     @Valid
     private List<LessonMaterialDto> materials = new ArrayList<>();
 
-    // ID атрибутів (наприклад, рівень, тип)
-    private List<Long> attributeIds = new ArrayList<>();
+    // Атрибути з їх значеннями
+    @Valid
+    private List<LessonAttributeDto> attributes = new ArrayList<>();
 
     // Дати створення/оновлення (тільки для відображення)
     private String createdAt;

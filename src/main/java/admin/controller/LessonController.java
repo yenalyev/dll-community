@@ -1,6 +1,6 @@
 package admin.controller;
 
-import admin.dto.LessonDto;
+import admin.dto.*;
 import admin.service.AttributeService;
 import admin.service.LessonService;
 import entity.lesson.Lesson;
@@ -62,8 +62,13 @@ public class LessonController {
         model.addAttribute("accessLevels", Lesson.AccessLevel.values());
         model.addAttribute("currencies", LessonPrice.Currency.values());
         model.addAttribute("materialTypes", LessonMaterial.MaterialType.values());
-        model.addAttribute("attributes", attributeService.getAllAttributes());
+
+        // ВАЖЛИВО: передаємо всі атрибути з опціями для форми
+        model.addAttribute("attributes", attributeService.getAllAttributesWithDetails());
         model.addAttribute("isEdit", false);
+
+        log.debug("Loaded {} attributes for form",
+                attributeService.getAllAttributesWithDetails().size());
 
         return "admin/lessons/form";
     }
@@ -81,6 +86,18 @@ public class LessonController {
         log.info("Creating lesson: {}", dto.getTranslations().get("uk") != null ?
                 dto.getTranslations().get("uk").getTitle() : "New Lesson");
 
+        // Логування отриманих атрибутів
+        if (dto.getAttributes() != null && !dto.getAttributes().isEmpty()) {
+            log.info("Received {} attributes", dto.getAttributes().size());
+            dto.getAttributes().forEach(attr ->
+                    log.debug("Attribute: attributeId={}, optionId={}, textValue={}, numberValue={}",
+                            attr.getAttributeId(), attr.getOptionId(),
+                            attr.getTextValue(), attr.getNumberValue())
+            );
+        } else {
+            log.info("No attributes received");
+        }
+
         if (bindingResult.hasErrors()) {
             log.warn("Validation errors: {}", bindingResult.getAllErrors());
             model.addAttribute("pageTitle", "Create Lesson");
@@ -88,7 +105,7 @@ public class LessonController {
             model.addAttribute("accessLevels", Lesson.AccessLevel.values());
             model.addAttribute("currencies", LessonPrice.Currency.values());
             model.addAttribute("materialTypes", LessonMaterial.MaterialType.values());
-            model.addAttribute("attributes", attributeService.getAllAttributes());
+            model.addAttribute("attributes", attributeService.getAllAttributesWithDetails());
             model.addAttribute("isEdit", false);
             return "admin/lessons/form";
         }
@@ -101,14 +118,14 @@ public class LessonController {
             return "redirect:/admin/lessons";
 
         } catch (IllegalArgumentException e) {
-            log.error("Error creating lesson: {}", e.getMessage());
+            log.error("Error creating lesson: {}", e.getMessage(), e);
             model.addAttribute("error", e.getMessage());
             model.addAttribute("pageTitle", "Create Lesson");
             model.addAttribute("availableLanguages", AVAILABLE_LANGUAGES);
             model.addAttribute("accessLevels", Lesson.AccessLevel.values());
             model.addAttribute("currencies", LessonPrice.Currency.values());
             model.addAttribute("materialTypes", LessonMaterial.MaterialType.values());
-            model.addAttribute("attributes", attributeService.getAllAttributes());
+            model.addAttribute("attributes", attributeService.getAllAttributesWithDetails());
             model.addAttribute("isEdit", false);
             return "admin/lessons/form";
         }
@@ -126,14 +143,31 @@ public class LessonController {
         // Додаємо порожні переклади для мов, яких немає
         dto.initializeTranslations();
 
+        // Логування завантажених атрибутів
+        if (dto.getAttributes() != null && !dto.getAttributes().isEmpty()) {
+            log.info("Loaded lesson with {} attributes", dto.getAttributes().size());
+            dto.getAttributes().forEach(attr ->
+                    log.debug("Loaded attribute: id={}, attributeId={}, optionId={}, textValue={}, numberValue={}",
+                            attr.getId(), attr.getAttributeId(), attr.getOptionId(),
+                            attr.getTextValue(), attr.getNumberValue())
+            );
+        } else {
+            log.info("Lesson has no attributes");
+        }
+
         model.addAttribute("pageTitle", "Edit Lesson");
         model.addAttribute("lesson", dto);
         model.addAttribute("availableLanguages", AVAILABLE_LANGUAGES);
         model.addAttribute("accessLevels", Lesson.AccessLevel.values());
         model.addAttribute("currencies", LessonPrice.Currency.values());
         model.addAttribute("materialTypes", LessonMaterial.MaterialType.values());
-        model.addAttribute("attributes", attributeService.getAllAttributes());
+        model.addAttribute("attributes", attributeService.getAllAttributesWithDetails());
         model.addAttribute("isEdit", true);
+
+
+        System.out.println("attributes - " + attributeService.getAllAttributesWithDetails());
+        System.out.println("dto - " + dto);
+
 
         return "admin/lessons/form";
     }
@@ -151,6 +185,18 @@ public class LessonController {
 
         log.info("Updating lesson: id={}", id);
 
+        // Логування отриманих атрибутів
+        if (dto.getAttributes() != null && !dto.getAttributes().isEmpty()) {
+            log.info("Received {} attributes for update", dto.getAttributes().size());
+            dto.getAttributes().forEach(attr ->
+                    log.debug("Attribute: id={}, attributeId={}, optionId={}, textValue={}, numberValue={}",
+                            attr.getId(), attr.getAttributeId(), attr.getOptionId(),
+                            attr.getTextValue(), attr.getNumberValue())
+            );
+        } else {
+            log.info("No attributes received - will clear all attributes");
+        }
+
         if (bindingResult.hasErrors()) {
             log.warn("Validation errors: {}", bindingResult.getAllErrors());
             model.addAttribute("pageTitle", "Edit Lesson");
@@ -158,7 +204,7 @@ public class LessonController {
             model.addAttribute("accessLevels", Lesson.AccessLevel.values());
             model.addAttribute("currencies", LessonPrice.Currency.values());
             model.addAttribute("materialTypes", LessonMaterial.MaterialType.values());
-            model.addAttribute("attributes", attributeService.getAllAttributes());
+            model.addAttribute("attributes", attributeService.getAllAttributesWithDetails());
             model.addAttribute("isEdit", true);
             return "admin/lessons/form";
         }
@@ -171,14 +217,14 @@ public class LessonController {
             return "redirect:/admin/lessons";
 
         } catch (IllegalArgumentException e) {
-            log.error("Error updating lesson: {}", e.getMessage());
+            log.error("Error updating lesson: {}", e.getMessage(), e);
             model.addAttribute("error", e.getMessage());
             model.addAttribute("pageTitle", "Edit Lesson");
             model.addAttribute("availableLanguages", AVAILABLE_LANGUAGES);
             model.addAttribute("accessLevels", Lesson.AccessLevel.values());
             model.addAttribute("currencies", LessonPrice.Currency.values());
             model.addAttribute("materialTypes", LessonMaterial.MaterialType.values());
-            model.addAttribute("attributes", attributeService.getAllAttributes());
+            model.addAttribute("attributes", attributeService.getAllAttributesWithDetails());
             model.addAttribute("isEdit", true);
             return "admin/lessons/form";
         }
@@ -201,7 +247,7 @@ public class LessonController {
             redirectAttributes.addFlashAttribute("success", "Lesson deleted successfully!");
 
         } catch (Exception e) {
-            log.error("Error deleting lesson: {}", e.getMessage());
+            log.error("Error deleting lesson: {}", e.getMessage(), e);
             redirectAttributes.addFlashAttribute("error", "Error deleting lesson: " + e.getMessage());
         }
 
@@ -218,6 +264,7 @@ public class LessonController {
             LessonDto dto = lessonService.getLessonById(id);
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
+            log.error("Error fetching lesson {}: {}", id, e.getMessage());
             return ResponseEntity.notFound().build();
         }
     }

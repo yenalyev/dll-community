@@ -9,7 +9,6 @@
 
 <div layout:fragment="content" x-data="lessonForm()">
 
-    <!-- Page Header -->
     <div class="mb-8">
         <a href="/admin/lessons" class="text-blue-600 hover:text-blue-700 flex items-center mb-4">
             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -22,7 +21,6 @@
         <p class="text-gray-600">Заповніть форму для створення або редагування уроку</p>
     </div>
 
-    <!-- Error Messages -->
     <div th:if="${error}"
          class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
         <p th:text="${error}"></p>
@@ -65,6 +63,69 @@
                 </div>
             </div>
         </div>
+
+<!--        Атрибути уроку-->
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-6">Атрибути уроку</h3>
+
+            <div class="space-y-6">
+                <th:block th:each="attr, iterStat : ${attributes}">
+                    <div class="border border-gray-200 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4"
+                            th:text="${attr.translations.get('uk')}">Атрибут</h4>
+
+                        <div th:if="${attr.type == 'select' || attr.type == 'multiselect'}">
+                            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                <th:block th:each="option, optIterStat : ${attr.options}">
+                                    <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg hover:border-warning hover:bg-yellow-50 transition cursor-pointer">
+
+                                        <input type="checkbox"
+                                               th:data-attribute-id="${attr.id}"
+                                               th:data-option-id="${option.id}"
+                                               class="attribute-checkbox w-5 h-5 text-warning border-gray-300 rounded focus:ring-warning focus:ring-2"
+                                               x-model="selectedOptions"
+                                               th:value="|${attr.id}-${option.id}|">
+                                        <span class="ml-3 text-sm font-medium text-gray-900"
+                                              th:text="${option.translations.get('uk')}">Опція</span>
+                                    </label>
+                                </th:block>
+                            </div>
+                        </div>
+
+                        <div th:if="${attr.type == 'text'}">
+                            <input type="text"
+                                   th:data-attribute-id="${attr.id}"
+                                   class="attribute-text w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                   th:attr=":value='getTextValue(' + ${attr.id} + ')',
+                                    @input='updateTextValue(' + ${attr.id} + ', $event.target.value)'"
+                                   placeholder="Введіть значення">
+                        </div>
+
+                        <div th:if="${attr.type == 'number'}">
+                            <input type="number"
+                                   step="0.01"
+                                   th:data-attribute-id="${attr.id}"
+                                   class="attribute-number w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                   th:attr=":value='getNumberValue(' + ${attr.id} + ')',
+                                    @input='updateNumberValue(' + ${attr.id} + ', $event.target.value)'"
+                                   placeholder="Введіть число">
+                        </div>
+                    </div>
+                </th:block>
+
+                <div th:if="${#lists.isEmpty(attributes)}"
+                     class="text-center py-8 text-gray-500">
+                    Немає доступних атрибутів. Створіть атрибути в розділі "Атрибути".
+                </div>
+            </div>
+
+            <div id="attributes-hidden-inputs">
+            </div>
+        </div>
+
+
+<!--        Текстова частина уроку-->
 
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8" x-data="{ activeTab: 'uk' }">
             <h3 class="text-xl font-semibold text-gray-900 mb-6">Переклади</h3>
@@ -250,13 +311,213 @@
 
 </div>
 
-<!-- Alpine.js Script -->
 <th:block layout:fragment="scripts">
-    <script>
+    <script th:inline="javascript">
         function lessonForm() {
             return {
+                // Зберігаємо обрані опції у форматі "attributeId-optionId"
+                selectedOptions: [],
+
+                // Зберігаємо текстові та числові значення
+                textValues: {},
+                numberValues: {},
+
                 init() {
                     console.log('Lesson form initialized');
+
+                    // Завантажуємо існуючі значення при редагуванні
+                    this.loadExistingAttributes();
+
+                    // Генеруємо hidden inputs при завантаженні та при змінах
+                    // $watch спрацює автоматично, коли loadExistingAttributes оновить selectedOptions
+                    this.$watch('selectedOptions', () => this.generateHiddenInputs());
+                    this.$watch('textValues', () => this.generateHiddenInputs());
+                    this.$watch('numberValues', () => this.generateHiddenInputs());
+                },
+
+                loadExistingAttributes() {
+                    // Завантажуємо існуючі атрибути з Thymeleaf
+                    /*[# th:if="${lesson != null and lesson.attributes != null}"]*/
+                    const existingAttrs = /*[[${lesson.attributes}]]*/ [];
+                    console.log('Loading existing attributes:', existingAttrs);
+
+                    // Створюємо тимчасові масиви, щоб не викликати $watch на кожній ітерації
+                    let loadedOptions = [];
+                    let loadedText = {};
+                    let loadedNumbers = {};
+
+                    existingAttrs.forEach(attr => {
+                        if (attr.optionId) {
+                            // Select/multiselect атрибути
+                            const value = `${attr.attributeId}-${attr.optionId}`;
+                            loadedOptions.push(value);
+                            console.log('Loaded option:', value);
+
+                        } else if (attr.textValue) {
+                            // Text атрибути
+                            loadedText[attr.attributeId] = attr.textValue;
+                            console.log('Loaded text:', attr.attributeId, '=', attr.textValue);
+
+                        } else if (attr.numberValue != null) {
+                            // Number атрибути
+                            loadedNumbers[attr.attributeId] = attr.numberValue;
+                            console.log('Loaded number:', attr.attributeId, '=', attr.numberValue);
+                        }
+                    });
+
+                    // Присвоюємо один раз, щоб Alpine (x-model) оновив UI
+                    // і щоб спрацював $watch
+                    this.selectedOptions = loadedOptions;
+                    this.textValues = loadedText;
+                    this.numberValues = loadedNumbers;
+
+                    // x-model оновить чекбокси автоматично.
+                    // $watch згенерує hidden inputs автоматично.
+
+                    // Ми можемо викликати generateHiddenInputs() тут для надійності,
+                    // якщо форма завантажується дуже швидко
+                    this.$nextTick(() => {
+                        this.generateHiddenInputs();
+                    });
+
+                    /*[/]*/
+                },
+
+                // *** ЗМІНА ***: Функція syncCheckboxes видалена.
+                // x-model автоматично синхронізує стан.
+
+                // *** ЗМІНА ***: Функція updateAttributeSelection видалена.
+                // x-model автоматично оновлює масив selectedOptions.
+
+                updateTextValue(attributeId, value) {
+                    if (value && value.trim()) {
+                        this.textValues[attributeId] = value;
+                    } else {
+                        // Використовуємо delete, щоб $watch спрацював
+                        delete this.textValues[attributeId];
+                    }
+                    console.log('Updated text values:', this.textValues);
+                },
+
+                updateNumberValue(attributeId, value) {
+                    if (value !== '' && value !== null) {
+                        this.numberValues[attributeId] = value;
+                    } else {
+                        delete this.numberValues[attributeId];
+                    }
+                    console.log('Updated number values:', this.numberValues);
+                },
+
+                getTextValue(attributeId) {
+                    return this.textValues[attributeId] || '';
+                },
+
+                getNumberValue(attributeId) {
+                    return this.numberValues[attributeId] || '';
+                },
+
+                generateHiddenInputs() {
+                    const container = document.getElementById('attributes-hidden-inputs');
+                    if (!container) {
+                        console.error('Hidden inputs container not found!');
+                        return;
+                    }
+
+                    container.innerHTML = '';
+                    let index = 0;
+
+                    // Додаємо hidden inputs для обраних опцій (select/multiselect)
+                    this.selectedOptions.forEach(value => {
+                        const [attributeId, optionId] = value.split('-');
+
+                        // Шукаємо існуючий ID (при редагуванні)
+                        let existingId = null;
+                        /*[# th:if="${lesson != null and lesson.attributes != null}"]*/
+                        const existing = /*[[${lesson.attributes}]]*/ [];
+                        const found = existing.find(a =>
+                            String(a.attributeId) === String(attributeId) &&
+                            String(a.optionId) === String(optionId)
+                        );
+                        if (found) existingId = found.id;
+                        /*[/]*/
+
+                        // ID (якщо існує - для оновлення)
+                        if (existingId) {
+                            container.innerHTML += `<input type="hidden" name="attributes[${index}].id" value="${existingId}">`;
+                        }
+
+                        // Attribute ID
+                        container.innerHTML += `<input type="hidden" name="attributes[${index}].attributeId" value="${attributeId}">`;
+
+                        // Option ID
+                        container.innerHTML += `<input type="hidden" name="attributes[${index}].optionId" value="${optionId}">`;
+
+                        index++;
+                    });
+
+                    // Додаємо hidden inputs для текстових значень
+                    Object.keys(this.textValues).forEach(attributeId => {
+                        const value = this.textValues[attributeId];
+                        if (!value || !value.trim()) return;
+
+                        // Шукаємо існуючий ID
+                        let existingId = null;
+                        /*[# th:if="${lesson != null and lesson.attributes != null}"]*/
+                        const existing = /*[[${lesson.attributes}]]*/ [];
+                        const found = existing.find(a =>
+                            String(a.attributeId) === String(attributeId) && a.textValue
+                        );
+                        if (found) existingId = found.id;
+                        /*[/]*/
+
+                        if (existingId) {
+                            container.innerHTML += `<input type="hidden" name="attributes[${index}].id" value="${existingId}">`;
+                        }
+
+                        container.innerHTML += `<input type="hidden" name="attributes[${index}].attributeId" value="${attributeId}">`;
+                        container.innerHTML += `<input type="hidden" name="attributes[${index}].textValue" value="${this.escapeHtml(value)}">`;
+
+                        index++;
+                    });
+
+                    // Додаємо hidden inputs для числових значень
+                    Object.keys(this.numberValues).forEach(attributeId => {
+                        const value = this.numberValues[attributeId];
+                        if (value === '' || value === null) return;
+
+                        // Шукаємо існуючий ID
+                        let existingId = null;
+                        /*[# th:if="${lesson != null and lesson.attributes != null}"]*/
+                        const existing = /*[[${lesson.attributes}]]*/ [];
+                        const found = existing.find(a =>
+                            String(a.attributeId) === String(attributeId) && a.numberValue != null
+                        );
+                        if (found) existingId = found.id;
+                        /*[/]*/
+
+                        if (existingId) {
+                            container.innerHTML += `<input type="hidden" name="attributes[${index}].id" value="${existingId}">`;
+                        }
+
+                        container.innerHTML += `<input type="hidden" name="attributes[${index}].attributeId" value="${attributeId}">`;
+                        container.innerHTML += `<input type="hidden" name="attributes[${index}].numberValue" value="${value}">`;
+
+                        index++;
+                    });
+
+                    console.log('Generated', index, 'attribute inputs');
+                },
+
+                escapeHtml(text) {
+                    if (typeof text !== 'string') return text;
+                    const map = {
+                        '&': '&amp;',
+                        '<': '&lt;',
+                        '>': '&gt;',
+                        '"': '&quot;',
+                        "'": '&#039;'
+                    };
+                    return text.replace(/[&<>"']/g, m => map[m]);
                 }
             }
         }

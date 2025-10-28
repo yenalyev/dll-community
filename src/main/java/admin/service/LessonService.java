@@ -2,8 +2,10 @@ package admin.service;
 
 import admin.dto.*;
 import entity.attributes.Attribute;
+import entity.attributes.AttributeOption;
 import entity.attributes.LessonAttribute;
 import entity.lesson.*;
+import repository.AttributeOptionRepository;
 import repository.AttributeRepository;
 import repository.LessonRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +26,7 @@ public class LessonService {
 
     private final LessonRepository lessonRepository;
     private final AttributeRepository attributeRepository;
+    private final AttributeOptionRepository attributeOptionRepository;
 
     private static final List<String> SUPPORTED_LANGUAGES = Arrays.asList("uk", "en", "de");
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm");
@@ -274,12 +277,13 @@ public class LessonService {
             dto.setMaterials(materials);
         }
 
-        // Атрибути
+        // Атрибути з їх значеннями
         if (lesson.getAttributes() != null) {
-            List<Long> attributeIds = lesson.getAttributes().stream()
-                    .map(la -> la.getAttribute().getId())
-                    .collect(Collectors.toList());
-            dto.setAttributeIds(attributeIds);
+            List<LessonAttributeDto> attributes = new ArrayList<>();
+            for (LessonAttribute lessonAttribute : lesson.getAttributes()) {
+                attributes.add(convertLessonAttributeToDto(lessonAttribute));
+            }
+            dto.setAttributes(attributes);
         }
 
         return dto;
@@ -302,7 +306,7 @@ public class LessonService {
         updateMaterials(lesson, dto.getMaterials());
 
         // Оновлення атрибутів
-        updateAttributes(lesson, dto.getAttributeIds());
+        updateAttributes(lesson, dto.getAttributes());
     }
 
     /**
@@ -441,26 +445,96 @@ public class LessonService {
     }
 
     /**
-     * Оновлення атрибутів
+     * Оновлення атрибутів з їх значеннями
      */
-    private void updateAttributes(Lesson lesson, List<Long> attributeIds) {
+    private void updateAttributes(Lesson lesson, List<LessonAttributeDto> attributeDtos) {
         if (lesson.getAttributes() == null) {
             lesson.setAttributes(new HashSet<>());
         }
 
-        // Очищуємо старі атрибути
-        lesson.getAttributes().clear();
+        log.debug("Updating attributes for lesson {}. Received {} attributes",
+                lesson.getId(), attributeDtos != null ? attributeDtos.size() : 0);
 
-        // Додаємо нові
-        if (attributeIds != null && !attributeIds.isEmpty()) {
-            for (Long attributeId : attributeIds) {
-                attributeRepository.findById(attributeId).ifPresent(attribute -> {
-                    LessonAttribute lessonAttribute = new LessonAttribute();
-                    lessonAttribute.setLesson(lesson);
-                    lessonAttribute.setAttribute(attribute);
-                    lesson.getAttributes().add(lessonAttribute);
-                });
+        // Збираємо ID існуючих записів з DTO
+        Set<Long> dtoAttributeIds = attributeDtos.stream()
+                .map(LessonAttributeDto::getId)
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        // Видаляємо записи, яких немає в DTO
+        lesson.getAttributes().removeIf(lessonAttr ->
+                lessonAttr.getId() != null && !dtoAttributeIds.contains(lessonAttr.getId())
+        );
+
+        // Додаємо або оновлюємо атрибути
+        for (LessonAttributeDto dto : attributeDtos) {
+            log.debug("Processing attribute: attributeId={}, optionId={}, textValue={}, numberValue={}",
+                    dto.getAttributeId(), dto.getOptionId(), dto.getTextValue(), dto.getNumberValue());
+
+            if (dto.getId() != null) {
+                // Оновлюємо існуючий запис
+                Optional<LessonAttribute> existing = lesson.getAttributes().stream()
+                        .filter(la -> dto.getId().equals(la.getId()))
+                        .findFirst();
+
+                if (existing.isPresent()) {
+                    updateLessonAttribute(existing.get(), dto);
+                }
+            } else {
+                // Створюємо новий запис
+                LessonAttribute lessonAttribute = new LessonAttribute();
+                lessonAttribute.setLesson(lesson);
+                updateLessonAttribute(lessonAttribute, dto);
+                lesson.getAttributes().add(lessonAttribute);
             }
+        }
+
+        log.debug("Attributes updated. Total count: {}", lesson.getAttributes().size());
+    }
+
+    /**
+     * Оновлення одного запису LessonAttribute
+     */
+    private void updateLessonAttribute(LessonAttribute lessonAttribute, LessonAttributeDto dto) {
+        // Завантажуємо атрибут
+        Attribute attribute = attributeRepository.findById(dto.getAttributeId())
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Attribute not found with id: " + dto.getAttributeId()));
+
+        lessonAttribute.setAttribute(attribute);
+
+        // Залежно від типу атрибута, встановлюємо відповідні значення
+        String attributeType = attribute.getType();
+
+        // Скидаємо всі значення
+        lessonAttribute.setOption(null);
+        lessonAttribute.setTextValue(null);
+        lessonAttribute.setNumberValue(null);
+
+        switch (attributeType) {
+            case "select":
+            case "multiselect":
+                if (dto.getOptionId() != null) {
+                    AttributeOption option = attributeOptionRepository.findById(dto.getOptionId())
+                            .orElseThrow(() -> new IllegalArgumentException(
+                                    "Option not found with id: " + dto.getOptionId()));
+                    lessonAttribute.setOption(option);
+                    log.debug("Set option {} for attribute {}", option.getId(), attribute.getId());
+                }
+                break;
+
+            case "text":
+                lessonAttribute.setTextValue(dto.getTextValue());
+                log.debug("Set text value '{}' for attribute {}", dto.getTextValue(), attribute.getId());
+                break;
+
+            case "number":
+                lessonAttribute.setNumberValue(dto.getNumberValue());
+                log.debug("Set number value {} for attribute {}", dto.getNumberValue(), attribute.getId());
+                break;
+
+            default:
+                log.warn("Unknown attribute type: {}", attributeType);
         }
     }
 
@@ -492,6 +566,26 @@ public class LessonService {
         dto.setTitle(material.getTitle());
         dto.setContent(material.getContent());
         dto.setSortOrder(material.getSortOrder());
+        return dto;
+    }
+
+    /**
+     * Конвертація LessonAttribute Entity -> DTO
+     */
+    private LessonAttributeDto convertLessonAttributeToDto(LessonAttribute lessonAttribute) {
+        LessonAttributeDto dto = new LessonAttributeDto();
+        dto.setId(lessonAttribute.getId());
+        dto.setAttributeId(lessonAttribute.getAttribute().getId());
+        dto.setAttributeName(lessonAttribute.getAttribute().getName());
+        dto.setAttributeType(lessonAttribute.getAttribute().getType());
+
+        // Встановлюємо значення залежно від типу
+        if (lessonAttribute.getOption() != null) {
+            dto.setOptionId(lessonAttribute.getOption().getId());
+        }
+        dto.setTextValue(lessonAttribute.getTextValue());
+        dto.setNumberValue(lessonAttribute.getNumberValue());
+
         return dto;
     }
 }
