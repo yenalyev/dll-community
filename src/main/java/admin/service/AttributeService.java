@@ -41,15 +41,21 @@ public class AttributeService {
                 .orElseThrow(() -> new IllegalArgumentException("Attribute not found with id: " + id));
 
         // Крок 2: Довантажуємо опції (без їх перекладів)
-        attributeRepository.findByIdWithOptions(id);
+        Attribute attrWithOptions = attributeRepository.findByIdWithOptions(id)
+                .orElseThrow(() -> new IllegalArgumentException("Attribute not found with id: " + id));
+
+        // Копіюємо опції з другого запиту в наш основний об'єкт
+        attribute.setOptions(attrWithOptions.getOptions());
 
         // Крок 3: Для кожної опції довантажуємо її переклади
-        // Hibernate закеширує сутності, тому просто ініціалізуємо колекції
         if (attribute.getOptions() != null && !attribute.getOptions().isEmpty()) {
             for (AttributeOption option : attribute.getOptions()) {
                 if (option.getId() != null) {
-                    // Ініціалізуємо переклади для кожної опції
-                    attributeRepository.findOptionByIdWithTranslations(option.getId());
+                    // Завантажуємо опцію з перекладами
+                    AttributeOption optionWithTranslations = attributeRepository.findOptionByIdWithTranslations(option.getId())
+                            .orElse(option);
+                    // Встановлюємо переклади
+                    option.setTranslations(optionWithTranslations.getTranslations());
                 }
             }
         }
@@ -67,7 +73,12 @@ public class AttributeService {
         log.info("Getting attribute by id: {}", id);
 
         Attribute attribute = findAttributeWithAllDetails(id);
-        return convertToDtoWithOptions(attribute);
+        AttributeDto dto = convertToDtoWithOptions(attribute);
+
+        log.debug("Converted attribute to DTO with {} options",
+                dto.getOptions() != null ? dto.getOptions().size() : 0);
+
+        return dto;
     }
 
     /**
@@ -301,7 +312,6 @@ public class AttributeService {
             dto.setTranslations(translations);
         }
 
-
         return dto;
     }
 
@@ -313,7 +323,7 @@ public class AttributeService {
         AttributeDto dto = convertToDto(attribute);
 
         // Мапінг опцій
-        if (attribute.getOptions() != null) {
+        if (attribute.getOptions() != null && !attribute.getOptions().isEmpty()) {
             List<AttributeOptionDto> optionDtos = new ArrayList<>();
 
             for (AttributeOption option : attribute.getOptions()) {
@@ -323,7 +333,7 @@ public class AttributeService {
                 optionDto.setSortOrder(option.getSortOrder());
 
                 // Мапінг перекладів опцій
-                if (option.getTranslations() != null) {
+                if (option.getTranslations() != null && !option.getTranslations().isEmpty()) {
                     Map<String, String> optionTranslations = new HashMap<>();
                     for (OptionTranslation translation : option.getTranslations()) {
                         optionTranslations.put(translation.getLangCode(), translation.getLabel());
@@ -339,6 +349,10 @@ public class AttributeService {
                     Comparator.nullsLast(Comparator.naturalOrder())));
 
             dto.setOptions(optionDtos);
+
+            log.debug("Converted {} options for attribute {}", optionDtos.size(), attribute.getId());
+        } else {
+            log.debug("No options found for attribute {}", attribute.getId());
         }
 
         return dto;

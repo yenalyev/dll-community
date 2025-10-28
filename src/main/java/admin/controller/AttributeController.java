@@ -119,6 +119,24 @@ public class AttributeController {
 
         AttributeDto dto = attributeService.getAttributeById(id);
 
+        // ДЕТАЛЬНЕ ЛОГУВАННЯ
+        log.info("=== ATTRIBUTE DATA ===");
+        log.info("ID: {}", dto.getId());
+        log.info("Name: {}", dto.getName());
+        log.info("Type: {}", dto.getType());
+        log.info("Options count: {}", dto.getOptions() != null ? dto.getOptions().size() : 0);
+
+        if (dto.getOptions() != null && !dto.getOptions().isEmpty()) {
+            log.info("=== OPTIONS DETAILS ===");
+            dto.getOptions().forEach(opt -> {
+                log.info("Option ID: {}, Value: {}, Translations: {}",
+                        opt.getId(), opt.getValue(), opt.getTranslations());
+            });
+        } else {
+            log.warn("NO OPTIONS FOUND FOR ATTRIBUTE {}", id);
+        }
+        log.info("======================");
+
         // Додаємо порожні переклади для мов, яких немає
         for (String lang : AVAILABLE_LANGUAGES) {
             dto.getTranslations().putIfAbsent(lang, "");

@@ -170,10 +170,11 @@
                 </button>
             </h3>
 
-            <div class="space-y-4">
+            <div class="space-y-4" id="optionsContainer">
                 <!-- Existing options from server -->
-                <template th:each="option, iterStat : ${attribute.options}">
-                    <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-gray-300 transition"
+                <th:block th:if="${attribute.options != null and !attribute.options.isEmpty()}">
+                    <div th:each="option, iterStat : ${attribute.options}"
+                         class="border-2 border-gray-200 rounded-lg p-4 hover:border-gray-300 transition existing-option"
                          x-data="{ expanded: true }">
 
                         <!-- Hidden ID field -->
@@ -194,7 +195,7 @@
                                 <span th:text="'Опція #' + ${iterStat.index + 1}">Опція</span>
                             </button>
                             <button type="button"
-                                    @click="$el.closest('.border-2').remove()"
+                                    @click="$el.closest('.existing-option').remove(); updateOptionIndexes();"
                                     class="text-red-600 hover:text-red-800 transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -246,22 +247,19 @@
                             </div>
                         </div>
                     </div>
-                </template>
+                </th:block>
 
                 <!-- Dynamic options container -->
                 <div id="dynamicOptionsContainer"></div>
+            </div>
 
-                <!-- Empty state -->
-                <div x-show="attributeType === 'select' || attributeType === 'multiselect'"
-                     x-cloak
-                     class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg"
-                     style="display: none;"
-                     :style="document.querySelectorAll('.border-2.border-gray-200').length === 0 ? '' : 'display: none;'">
-                    <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    <p>Опцій поки немає. Натисніть "Додати опцію" для створення</p>
-                </div>
+            <!-- Empty state - only show if no options exist -->
+            <div th:if="${attribute.options == null or attribute.options.isEmpty()}"
+                 class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg mt-4">
+                <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+                </svg>
+                <p>Опцій поки немає. Натисніть "Додати опцію" для створення</p>
             </div>
         </div>
 
@@ -286,15 +284,28 @@
         function attributeForm() {
             return {
                 attributeType: /*[[${attribute.type}]]*/ '',
-                optionCounter: /*[[${#lists.size(attribute.options)}]]*/ 0,
+                optionCounter: /*[[${attribute.options != null ? #lists.size(attribute.options) : 0}]]*/ 0,
                 availableLanguages: /*[[${availableLanguages}]]*/ ['uk', 'en', 'de'],
+
+                init() {
+                    console.log('Form initialized');
+                    console.log('Attribute type:', this.attributeType);
+                    console.log('Existing options count:', this.optionCounter);
+
+                    // Перерахуємо існуючі опції на випадок якщо Thymeleaf не передав правильну кількість
+                    const existingOptions = document.querySelectorAll('.existing-option');
+                    if (existingOptions.length > 0) {
+                        this.optionCounter = existingOptions.length;
+                        console.log('Adjusted option counter to:', this.optionCounter);
+                    }
+                },
 
                 addOption() {
                     const container = document.getElementById('dynamicOptionsContainer');
                     const index = this.optionCounter++;
 
                     const optionHtml = `
-                    <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-gray-300 transition" x-data="{ expanded: true }">
+                    <div class="border-2 border-gray-200 rounded-lg p-4 hover:border-gray-300 transition dynamic-option" x-data="{ expanded: true }">
                         <!-- Option Header -->
                         <div class="flex items-center justify-between mb-3">
                             <button type="button"
@@ -308,7 +319,7 @@
                                 Нова опція #${index + 1}
                             </button>
                             <button type="button"
-                                    onclick="this.closest('.border-2').remove()"
+                                    onclick="this.closest('.dynamic-option').remove()"
                                     class="text-red-600 hover:text-red-800 transition">
                                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
@@ -358,9 +369,23 @@
                     container.insertAdjacentHTML('beforeend', optionHtml);
                 },
 
+                updateOptionIndexes() {
+                    // Оновлюємо індекси після видалення опції
+                    const allOptions = document.querySelectorAll('.existing-option, .dynamic-option');
+                    allOptions.forEach((option, index) => {
+                        const inputs = option.querySelectorAll('input[name^="options["]');
+                        inputs.forEach(input => {
+                            const name = input.getAttribute('name');
+                            const newName = name.replace(/options\[\d+\]/, `options[${index}]`);
+                            input.setAttribute('name', newName);
+                        });
+                    });
+                    this.optionCounter = allOptions.length;
+                },
+
                 prepareSubmit(event) {
-                    // Можна додати додаткову логіку перед відправкою форми
                     console.log('Form submitted');
+                    // Можна додати додаткову логіку перед відправкою форми
                 }
             }
         }
