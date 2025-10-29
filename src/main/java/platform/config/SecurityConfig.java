@@ -35,7 +35,8 @@ public class SecurityConfig {
                                 "/",
                                 // Публічні сторінки з будь-яким мовним кодом
                                 "/*/home", "/*/index", "/*/",
-                                "/*/login", "/*/register"
+                                "/*/login", "/*/register",
+                                "/uploads/**"
                         ).permitAll()
                         // --- 2. Адмін-панель (тільки для ADMIN, БЕЗ мовного префікса) ---
                         .antMatchers("/admin/**").hasRole("ADMIN")
