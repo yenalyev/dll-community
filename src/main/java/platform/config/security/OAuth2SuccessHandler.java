@@ -3,7 +3,9 @@ package platform.config.security;
 import entity.user.User;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Lazy;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
@@ -18,28 +20,22 @@ import java.io.IOException;
 /**
  * Handler для обробки успішної OAuth2 автентифікації.
  *
- * Використовує @Lazy для розриву циклічної залежності між:
- * SecurityConfig -> OAuth2SuccessHandler -> UserService -> PasswordEncoder -> SecurityConfig
- *
- * Це безпечно, оскільки:
- * 1. Handler викликається тільки після повної ініціалізації Spring Context
- * 2. UserService не використовується при старті додатку
- * 3. Перше звернення відбувається при OAuth логіні, коли всі біни готові
+ * Після успішного OAuth2 логіну замінює DefaultOAuth2User на CustomUserDetails,
+ * щоб забезпечити єдиний інтерфейс для доступу до даних користувача.
  */
 @Slf4j
 @Component
 public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccessHandler {
 
     private final UserService userService;
+    private final CustomUserDetailsService userDetailsService;
 
-    /**
-     * @Lazy розриває циклічну залежність.
-     * UserService буде ініціалізований при першому використанні,
-     * що гарантовано відбудеться ПІСЛЯ завершення ініціалізації Spring Context.
-     */
-    public OAuth2SuccessHandler(@Lazy UserService userService) {
+    public OAuth2SuccessHandler(
+            @Lazy UserService userService,
+            @Lazy CustomUserDetailsService userDetailsService) {
         this.userService = userService;
-        log.debug("OAuth2SuccessHandler initialized with lazy UserService injection");
+        this.userDetailsService = userDetailsService;
+        log.debug("OAuth2SuccessHandler initialized with lazy injection");
     }
 
     @Override
@@ -65,13 +61,28 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
         log.info("OAuth2 authentication successful: provider={}, email={}", provider, email);
 
         try {
-            // На цьому етапі UserService гарантовано ініціалізований
+            // Обробляємо OAuth користувача (створюємо або оновлюємо в БД)
             User user = userService.processOAuthLogin(provider, providerUserId, email, name);
             log.info("OAuth2 user processed: userId={}, email={}", user.getId(), email);
 
+            // ВАЖЛИВО: Завантажуємо CustomUserDetails для цього користувача
+            CustomUserDetails userDetails = (CustomUserDetails) userDetailsService.loadUserByUsername(email);
+
+            // Створюємо новий Authentication token з CustomUserDetails
+            UsernamePasswordAuthenticationToken newAuth = new UsernamePasswordAuthenticationToken(
+                    userDetails,
+                    null,
+                    userDetails.getAuthorities()
+            );
+            newAuth.setDetails(authentication.getDetails());
+
+            // КРИТИЧНО: Оновлюємо SecurityContext з новим Authentication
+            SecurityContextHolder.getContext().setAuthentication(newAuth);
+
+            log.debug("Updated SecurityContext with CustomUserDetails for user: {}", email);
+
         } catch (Exception e) {
             log.error("Error processing OAuth2 login for email={}", email, e);
-            // Можна перенаправити на сторінку помилки
             response.sendRedirect("/login?error=oauth");
             return;
         }
