@@ -1,0 +1,62 @@
+ def remote = [:]
+ remote.name = 'test'
+ remote.host = '138.68.106.228'
+ remote.allowAnyHosts = true
+
+ pipeline{
+        agent any
+
+        tools {
+                maven "Maven 3.8.4"
+        }
+
+        stages{
+            stage('Initialize'){
+               steps{
+                   echo "PATH = ${M2_HOME}/bin:${PATH}"
+                   echo "M2_HOME = /opt/maven"
+               }
+            }
+
+
+            stage("create docker image"){
+                steps{
+                    echo"===================start building image==============================="
+                    sh 'mvn -B -DskipTests clean package -Pstage'
+                    sh 'docker build -t dll .'
+                }
+            }
+
+            stage("push docker image into docker hub"){
+            steps{
+            echo "===========================pushing docker image============================"
+            sh 'docker login -u maximen -p 22beacfa-2298-4c12-8431-49fa0fca2b32'
+            sh 'docker image tag dll maximen/test:dll_stage'
+            sh 'docker push maximen/test:dll_stage'
+            }
+            }
+
+
+
+            stage("deploy"){
+                steps{
+                    echo"===================start deploy==============================="
+                    script{
+                        withCredentials([
+                            usernamePassword(credentialsId: 'crm-stage-user',
+                                usernameVariable: 'username',
+                                passwordVariable: 'password')
+                              ])
+                        {
+                        remote.user = username
+                        remote.password = password
+                        sshCommand(remote: remote, command: "docker pull maximen/test:dll_stage")
+                        sshCommand(remote: remote, command: "docker stop dll_stage")
+                        sshCommand(remote: remote, command: "docker rm dll_stage")
+                        sshCommand(remote: remote, command: "docker run --name dll_stage --network=dv-net -p 8082:8082 -v /home/dll_stage:/home -d maximen/test:dll_stage")
+                        }
+                    }
+                }
+            }
+        }
+ }
