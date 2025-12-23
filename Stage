@@ -41,29 +41,6 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
-            steps {
-                echo "=================== Running Tests ======================="
-                sh 'mvn test'
-            }
-            post {
-                always {
-                    junit '**/target/surefire-reports/*.xml'
-                }
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                echo "=================== Building Docker Image ======================="
-                sh """
-                    docker build -t ${DOCKER_IMAGE}:${DOCKER_TAG} .
-                    docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                    docker tag ${DOCKER_IMAGE}:${DOCKER_TAG} ${DOCKER_IMAGE}:${GIT_COMMIT_SHORT}
-                """
-            }
-        }
-
         stage('Push to Docker Hub') {
             steps {
                 echo "=================== Pushing to Docker Hub ======================="
@@ -85,47 +62,7 @@ pipeline {
             }
         }
 
-        stage('Backup Database') {
-            steps {
-                echo "=================== Backing Up Database ======================="
-                script {
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'crm-stage-user',
-                            usernameVariable: 'SSH_USER',
-                            passwordVariable: 'SSH_PASS'
-                        ),
-                        usernamePassword(
-                            credentialsId: 'mysql-staging-credentials',
-                            usernameVariable: 'MYSQL_USER',
-                            passwordVariable: 'MYSQL_PASS'
-                        ),
-                        string(
-                            credentialsId: 'mysql-database-name',
-                            variable: 'MYSQL_DB'
-                        )
-                    ]) {
-                        remote.user = SSH_USER
-                        remote.password = SSH_PASS
-                        
-                        // Створити backup
-                        sshCommand(remote: remote, command: """
-                            mkdir -p ${STAGING_PATH}/mysql/backups
-                            docker exec dll-stage-mysql mysqldump \
-                                -u\${MYSQL_USER} -p\${MYSQL_PASS} \
-                                ${MYSQL_DB} | gzip > \
-                                ${STAGING_PATH}/mysql/backups/backup_${BUILD_NUMBER}_\$(date +%Y%m%d_%H%M%S).sql.gz
-                        """)
-                        
-                        // Видалити старі backup (зберігаємо 7 днів)
-                        sshCommand(remote: remote, command: """
-                            find ${STAGING_PATH}/mysql/backups/ -name "backup_*.sql.gz" \
-                                -mtime +7 -delete
-                        """)
-                    }
-                }
-            }
-        }
+
 
         stage('Deploy to Staging') {
             steps {
