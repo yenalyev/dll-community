@@ -2,7 +2,7 @@
  remote.name = 'test'
  remote.host = '138.68.106.228'
  remote.allowAnyHosts = true
- remote.timeoutSec = 600  // ✅ 10 хвилин timeout
+ remote.timeoutSec = 600
  remote.pty = true
 
  pipeline{
@@ -32,9 +32,17 @@
             stage("push docker image into docker hub"){
             steps{
             echo "===========================pushing docker image============================"
-            sh 'docker login -u maximen -p 22beacfa-2298-4c12-8431-49fa0fca2b32'
-            sh 'docker image tag dll maximen/test:dll_stage'
-            sh 'docker push maximen/test:dll_stage'
+            script{
+                withCredentials([
+                    usernamePassword(credentialsId: 'docker-hub-creds',
+                    usernameVariable: 'username',
+                    passwordVariable: 'password')
+                   ])
+                {
+                remote.user = username
+                remote.password = password
+                sshCommand(remote: remote, command: "docker image tag dll maximen/test:dll_stage")
+                sshCommand(remote: remote, command: "docker push maximen/test:dll_stage")
             }
             }
 
