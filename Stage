@@ -2,6 +2,8 @@
  remote.name = 'test'
  remote.host = '138.68.106.228'
  remote.allowAnyHosts = true
+ remote.timeoutSec = 600  // ✅ 10 хвилин timeout
+ remote.pty = true
 
  pipeline{
         agent any
@@ -53,7 +55,7 @@
                         sshCommand(remote: remote, command: "docker pull maximen/test:dll_stage")
                         sshCommand(remote: remote, command: "docker stop dll_stage")
                         sshCommand(remote: remote, command: "docker rm dll_stage")
-                        sshCommand(remote: remote, command: "docker run --name dll_stage --network=app-network -p 8090:8090 -v /home/dll_stage:/home -d maximen/test:dll_stage")
+                        sshCommand(remote: remote, command: "docker run --name dll_stage --network=app-network -p 8082:8082 -v /home/dll_stage:/home -d maximen/test:dll_stage")
                         }
                     }
                 }
