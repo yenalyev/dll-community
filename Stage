@@ -1,276 +1,62 @@
-def remote = [:]
-remote.name = 'staging'
-remote.host = '138.68.106.228'
-remote.allowAnyHosts = true
+ def remote = [:]
+ remote.name = 'test'
+ remote.host = '138.68.106.228'
+ remote.allowAnyHosts = true
 
-pipeline {
-    agent any
+ pipeline{
+        agent any
 
-    tools {
-        maven "Maven 3.8.4"
-    }
-
-    environment {
-        DOCKER_IMAGE = 'maximen/test'
-        DOCKER_TAG = 'dll_stage'
-        STAGING_PATH = '/home/dll_stage'
-        COMPOSE_PATH = '/home/dll_stage/compose'
-        APP_PORT = '8082'
-        HEALTH_CHECK_URL = 'http://localhost:8082/actuator/health'
-        
-        // Витягуємо короткий commit hash для тегування
-        GIT_COMMIT_SHORT = sh(
-            script: "git rev-parse --short HEAD",
-            returnStdout: true
-        ).trim()
-    }
-
-    stages {
-        stage('Initialize') {
-            steps {
-                echo "Starting build for commit: ${GIT_COMMIT_SHORT}"
-                echo "PATH = ${M2_HOME}/bin:${PATH}"
-                echo "M2_HOME = /opt/maven"
-            }
+        tools {
+                maven "Maven 3.8.4"
         }
 
-        stage('Build Application') {
-            steps {
-                echo "=================== Building Application ======================="
-                sh 'mvn -B -DskipTests clean package -Pstage'
+        stages{
+            stage('Initialize'){
+               steps{
+                   echo "PATH = ${M2_HOME}/bin:${PATH}"
+                   echo "M2_HOME = /opt/maven"
+               }
             }
-        }
 
-        stage('Push to Docker Hub') {
-            steps {
-                echo "=================== Pushing to Docker Hub ======================="
-                script {
-                    // ✅ БЕЗПЕЧНО: Використовуємо Jenkins credentials
-                    withCredentials([usernamePassword(
-                        credentialsId: 'dockerhub-credentials',
-                        usernameVariable: 'DOCKER_USER',
-                        passwordVariable: 'DOCKER_PASS'
-                    )]) {
-                        sh """
-                            echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin
-                            docker push ${DOCKER_IMAGE}:${DOCKER_TAG}
-                            docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-                            docker push ${DOCKER_IMAGE}:${GIT_COMMIT_SHORT}
-                        """
-                    }
+
+            stage("create docker image"){
+                steps{
+                    echo"===================start building image==============================="
+                    sh 'mvn -B -DskipTests clean package -Pstage'
+                    sh 'docker build -t dll .'
                 }
             }
-        }
 
-
-
-        stage('Deploy to Staging') {
-            steps {
-                echo "=================== Deploying to Staging ======================="
-                script {
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'crm-stage-user',
-                            usernameVariable: 'SSH_USER',
-                            passwordVariable: 'SSH_PASS'
-                        )
-                    ]) {
-                        remote.user = SSH_USER
-                        remote.password = SSH_PASS
-                        
-                        // Pull новий образ
-                        sshCommand(remote: remote, command: """
-                            cd ${COMPOSE_PATH}
-                            docker-compose pull app
-                        """)
-                        
-                        // Зупинити app (але не MySQL і nginx!)
-                        sshCommand(remote: remote, command: """
-                            cd ${COMPOSE_PATH}
-                            docker-compose stop app
-                            docker-compose rm -f app
-                        """)
-                        
-                        // Запустити новий app
-                        sshCommand(remote: remote, command: """
-                            cd ${COMPOSE_PATH}
-                            docker-compose up -d app
-                        """)
-                    }
-                }
+            stage("push docker image into docker hub"){
+            steps{
+            echo "===========================pushing docker image============================"
+            sh 'docker login -u maximen -p 22beacfa-2298-4c12-8431-49fa0fca2b32'
+            sh 'docker image tag dll maximen/test:dll_stage'
+            sh 'docker push maximen/test:dll_stage'
             }
-        }
+            }
 
-        stage('Health Check') {
-            steps {
-                echo "=================== Checking Application Health ======================="
-                script {
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'crm-stage-user',
-                            usernameVariable: 'SSH_USER',
-                            passwordVariable: 'SSH_PASS'
-                        )
-                    ]) {
-                        remote.user = SSH_USER
-                        remote.password = SSH_PASS
-                        
-                        def healthCheckPassed = false
-                        def maxAttempts = 10
-                        def attempt = 0
-                        
-                        while (!healthCheckPassed && attempt < maxAttempts) {
-                            attempt++
-                            echo "Health check attempt ${attempt}/${maxAttempts}..."
-                            
-                            try {
-                                def result = sshCommand(
-                                    remote: remote,
-                                    command: "curl -f ${HEALTH_CHECK_URL}",
-                                    failOnError: false
-                                )
-                                
-                                if (result == 0) {
-                                    healthCheckPassed = true
-                                    echo "✅ Health check passed!"
-                                } else {
-                                    echo "⏳ Waiting 10 seconds before retry..."
-                                    sleep 10
-                                }
-                            } catch (Exception e) {
-                                echo "⏳ Waiting 10 seconds before retry..."
-                                sleep 10
-                            }
-                        }
-                        
-                        if (!healthCheckPassed) {
-                            error("❌ Health check failed after ${maxAttempts} attempts!")
+
+
+            stage("deploy"){
+                steps{
+                    echo"===================start deploy==============================="
+                    script{
+                        withCredentials([
+                            usernamePassword(credentialsId: 'crm-stage-user',
+                                usernameVariable: 'username',
+                                passwordVariable: 'password')
+                              ])
+                        {
+                        remote.user = username
+                        remote.password = password
+                        sshCommand(remote: remote, command: "docker pull maximen/test:dll_stage")
+                        sshCommand(remote: remote, command: "docker stop dll_stage")
+                        sshCommand(remote: remote, command: "docker rm dll_stage")
+                        sshCommand(remote: remote, command: "docker run --name dll_stage --network=app-network -p 8090:8090 -v /home/dll_stage:/home -d maximen/test:dll_stage")
                         }
                     }
                 }
             }
         }
-
-        stage('Verify Deployment') {
-            steps {
-                echo "=================== Verifying Deployment ======================="
-                script {
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'crm-stage-user',
-                            usernameVariable: 'SSH_USER',
-                            passwordVariable: 'SSH_PASS'
-                        )
-                    ]) {
-                        remote.user = SSH_USER
-                        remote.password = SSH_PASS
-                        
-                        // Перевірити статус контейнера
-                        sshCommand(remote: remote, command: """
-                            cd ${COMPOSE_PATH}
-                            docker-compose ps app
-                            docker-compose logs --tail=50 app
-                        """)
-                    }
-                }
-            }
-        }
-
-        stage('Cleanup') {
-            steps {
-                echo "=================== Cleaning Up ======================="
-                script {
-                    // Видалити старі Docker образи на Jenkins
-                    sh """
-                        docker image prune -f
-                        docker images | grep ${DOCKER_IMAGE} | grep -v ${DOCKER_TAG} | \
-                            grep -v ${BUILD_NUMBER} | grep -v ${GIT_COMMIT_SHORT} | \
-                            awk '{print \$3}' | xargs -r docker rmi -f || true
-                    """
-                    
-                    // Видалити старі образи на staging
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'crm-stage-user',
-                            usernameVariable: 'SSH_USER',
-                            passwordVariable: 'SSH_PASS'
-                        )
-                    ]) {
-                        remote.user = SSH_USER
-                        remote.password = SSH_PASS
-                        
-                        sshCommand(remote: remote, command: """
-                            docker image prune -f
-                            docker images | grep ${DOCKER_IMAGE} | grep '<none>' | \
-                                awk '{print \$3}' | xargs -r docker rmi -f || true
-                        """)
-                    }
-                }
-            }
-        }
-    }
-
-    post {
-        success {
-            echo "✅ Deployment successful!"
-            echo "Application URL: http://138.68.106.228:${APP_PORT}"
-            
-            // Можна додати email нотифікацію
-            // emailext(
-            //     subject: "✅ Deployment Successful - Build #${BUILD_NUMBER}",
-            //     body: "Application deployed successfully to staging.",
-            //     to: "your-email@example.com"
-            // )
-        }
-        
-        failure {
-            echo "❌ Deployment failed!"
-            
-            script {
-                // Автоматичний rollback
-                def previousBuild = BUILD_NUMBER.toInteger() - 1
-                
-                if (previousBuild > 0) {
-                    echo "🔄 Attempting automatic rollback to build #${previousBuild}..."
-                    
-                    withCredentials([
-                        usernamePassword(
-                            credentialsId: 'crm-stage-user',
-                            usernameVariable: 'SSH_USER',
-                            passwordVariable: 'SSH_PASS'
-                        )
-                    ]) {
-                        remote.user = SSH_USER
-                        remote.password = SSH_PASS
-                        
-                        try {
-                            sshCommand(remote: remote, command: """
-                                cd ${COMPOSE_PATH}
-                                docker-compose stop app
-                                docker-compose rm -f app
-                                docker pull ${DOCKER_IMAGE}:${previousBuild}
-                                docker tag ${DOCKER_IMAGE}:${previousBuild} ${DOCKER_IMAGE}:${DOCKER_TAG}
-                                docker-compose up -d app
-                            """)
-                            
-                            echo "✅ Rollback to build #${previousBuild} completed"
-                        } catch (Exception e) {
-                            echo "❌ Rollback failed: ${e.message}"
-                        }
-                    }
-                }
-            }
-            
-            // emailext(
-            //     subject: "❌ Deployment Failed - Build #${BUILD_NUMBER}",
-            //     body: "Application deployment failed. Check Jenkins logs.",
-            //     to: "your-email@example.com"
-            // )
-        }
-        
-        always {
-            // Cleanup workspace
-            cleanWs()
-        }
-    }
-}
+ }
