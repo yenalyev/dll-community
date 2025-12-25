@@ -38,8 +38,8 @@ pipeline{
                         passwordVariable: 'password')
                     ]){
                         sh "docker login -u ${username} -p ${password}"
-                        sh "docker image tag dll maximen/test:dll_stage"
-                        sh "docker push maximen/test:dll_stage"
+                        sh "docker image tag dll maximen/test:dll-stage"
+                        sh "docker push maximen/test:dll-stage"
                     }
                 }
             }
