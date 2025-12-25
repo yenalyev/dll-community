@@ -1,6 +1,6 @@
 def remote = [:]
 remote.name = 'test'
-remote.host = '138.68.106.228'
+remote.host = '138.68.70.165'
 remote.allowAnyHosts = true
 remote.timeoutSec = 600
 remote.pty = true
