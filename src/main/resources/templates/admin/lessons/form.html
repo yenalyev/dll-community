@@ -1,9 +1,9 @@
 <!DOCTYPE html>
 <html lang="uk" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/admin}" xmlns:x-bind="http://www.w3.org/1999/xhtml">
+      layout:decorate="~{layout/admin}">
 <head>
-    <title th:text="${isEdit} ? 'Edit Lesson' : 'Create Lesson'">Lesson Form</title>
+    <title th:text="${isEdit} ? 'Редагування уроку' : 'Створення уроку'">Lesson Form</title>
 </head>
 <body>
 
@@ -33,6 +33,7 @@
 
         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
 
+        <!-- Основна інформація -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h3 class="text-xl font-semibold text-gray-900 mb-6">Основна інформація</h3>
 
@@ -64,8 +65,148 @@
             </div>
         </div>
 
-<!--        Атрибути уроку-->
+        <!-- Ціни -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Ціни</h3>
+                <button type="button"
+                        @click="addPrice()"
+                        class="bg-warning text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-500 transition font-semibold text-sm">
+                    + Додати ціну
+                </button>
+            </div>
 
+            <div class="space-y-4">
+                <template x-for="(price, index) in prices" :key="index">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-1 grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                        Валюта <span class="text-red-500">*</span>
+                                    </label>
+                                    <select x-model="price.currency"
+                                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                            required>
+                                        <option value="">Оберіть валюту</option>
+                                        <option th:each="currency : ${currencies}"
+                                                th:value="${currency}"
+                                                th:text="${currency}">Currency</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                        Сума <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number"
+                                           x-model="price.amount"
+                                           step="1"
+                                           min="0"
+                                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                           placeholder="В копійках (наприклад, 10000 = 100.00)"
+                                           required>
+                                </div>
+                            </div>
+                            <button type="button"
+                                    @click="removePrice(index)"
+                                    class="mt-8 text-red-600 hover:text-red-800 transition">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="prices.length === 0" class="text-center py-8 text-gray-500">
+                    Немає доданих цін. Натисніть "Додати ціну" для додавання.
+                </div>
+            </div>
+
+            <div id="prices-hidden-inputs"></div>
+        </div>
+
+        <!-- Матеріали -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Матеріали уроку</h3>
+                <button type="button"
+                        @click="addMaterial()"
+                        class="bg-warning text-gray-900 px-4 py-2 rounded-lg hover:bg-yellow-500 transition font-semibold text-sm">
+                    + Додати матеріал
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <template x-for="(material, index) in materials" :key="index">
+                    <div class="border border-gray-200 rounded-lg p-4">
+                        <div class="flex items-start gap-4">
+                            <div class="flex-1 space-y-4">
+                                <div class="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                            Тип матеріалу <span class="text-red-500">*</span>
+                                        </label>
+                                        <select x-model="material.materialType"
+                                                class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                                required>
+                                            <option value="">Оберіть тип</option>
+                                            <option th:each="type : ${materialTypes}"
+                                                    th:value="${type}"
+                                                    th:text="${type}">Type</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                            Порядок сортування <span class="text-red-500">*</span>
+                                        </label>
+                                        <input type="number"
+                                               x-model="material.sortOrder"
+                                               min="0"
+                                               class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                               required>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                        Назва (необов'язково)
+                                    </label>
+                                    <input type="text"
+                                           x-model="material.title"
+                                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                           placeholder="Назва матеріалу">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                        Контент <span class="text-red-500">*</span>
+                                    </label>
+                                    <textarea x-model="material.content"
+                                              rows="3"
+                                              class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                              placeholder="URL для PDF/LINK/IMAGE або текст для TEXT_BLOCK"
+                                              required></textarea>
+                                </div>
+                            </div>
+                            <button type="button"
+                                    @click="removeMaterial(index)"
+                                    class="mt-8 text-red-600 hover:text-red-800 transition">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="materials.length === 0" class="text-center py-8 text-gray-500">
+                    Немає доданих матеріалів. Натисніть "Додати матеріал" для додавання.
+                </div>
+            </div>
+
+            <div id="materials-hidden-inputs"></div>
+        </div>
+
+        <!-- Атрибути уроку -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
             <h3 class="text-xl font-semibold text-gray-900 mb-6">Атрибути уроку</h3>
 
@@ -79,7 +220,6 @@
                             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                 <th:block th:each="option, optIterStat : ${attr.options}">
                                     <label class="flex items-center p-3 border-2 border-gray-200 rounded-lg hover:border-warning hover:bg-yellow-50 transition cursor-pointer">
-
                                         <input type="checkbox"
                                                th:data-attribute-id="${attr.id}"
                                                th:data-option-id="${option.id}"
@@ -120,108 +260,10 @@
                 </div>
             </div>
 
-            <div id="attributes-hidden-inputs">
-            </div>
+            <div id="attributes-hidden-inputs"></div>
         </div>
 
-        <!-- Матеріали уроку -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <div class="flex items-center justify-between mb-6">
-                <h3 class="text-xl font-semibold text-gray-900">Матеріали уроку</h3>
-                <button type="button"
-                        @click="addMaterial()"
-                        class="px-4 py-2 bg-warning text-gray-900 rounded-lg font-semibold hover:bg-yellow-500 transition flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
-                    </svg>
-                    Додати матеріал
-                </button>
-            </div>
-
-            <div class="space-y-4">
-                <template x-for="(material, index) in materials" :key="index">
-                    <div class="border-2 border-gray-200 rounded-lg p-6 relative">
-                        <button type="button"
-                                @click="removeMaterial(index)"
-                                class="absolute top-4 right-4 text-red-600 hover:text-red-700 transition">
-                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pr-12">
-                            <!-- Тип матеріалу -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                    Тип матеріалу <span class="text-red-500">*</span>
-                                </label>
-                                <select x-model="material.materialType"
-                                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition">
-                                    <option value="">Оберіть тип</option>
-                                    <option th:each="type : ${materialTypes}"
-                                            th:value="${type}"
-                                            th:text="${type}"
-                                            x-bind:value="type">Type</option>
-                                </select>
-                            </div>
-
-                            <!-- Порядок сортування -->
-                            <div>
-                                <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                    Порядок
-                                </label>
-                                <input type="number"
-                                       x-model="material.sortOrder"
-                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
-                                       placeholder="0">
-                            </div>
-
-                            <!-- Назва -->
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                    Назва
-                                </label>
-                                <input type="text"
-                                       x-model="material.title"
-                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
-                                       placeholder="Назва матеріалу">
-                            </div>
-
-                            <!-- Контент (URL або текст) -->
-                            <div class="md:col-span-2">
-                                <label class="block text-sm font-semibold text-gray-900 mb-2">
-                                    <span x-show="material.materialType === 'TEXT_BLOCK'">Текст</span>
-                                    <span x-show="material.materialType !== 'TEXT_BLOCK'">URL</span>
-                                    <span class="text-red-500">*</span>
-                                </label>
-                                <textarea x-show="material.materialType === 'TEXT_BLOCK'"
-                                          x-model="material.content"
-                                          rows="4"
-                                          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
-                                          placeholder="Введіть текст"></textarea>
-                                <input x-show="material.materialType !== 'TEXT_BLOCK'"
-                                       type="url"
-                                       x-model="material.content"
-                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
-                                       placeholder="https://example.com/file.pdf">
-                            </div>
-                        </div>
-                    </div>
-                </template>
-
-                <div x-show="materials.length === 0"
-                     class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
-                    Немає матеріалів. Натисніть "Додати матеріал" щоб додати перший матеріал.
-                </div>
-            </div>
-
-            <!-- Hidden inputs для матеріалів -->
-            <div id="materials-hidden-inputs"></div>
-        </div>
-
-
-<!--        Текстова частина уроку-->
-
+        <!-- Переклади -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8" x-data="{ activeTab: 'uk' }">
             <h3 class="text-xl font-semibold text-gray-900 mb-6">Переклади</h3>
 
@@ -249,6 +291,7 @@
             </div>
 
             <div>
+                <!-- Українська -->
                 <div x-show="activeTab === 'uk'" class="space-y-4">
                     <input type="hidden" th:field="*{translations['uk'].lang}">
                     <input type="hidden" th:field="*{translations['uk'].id}">
@@ -296,6 +339,7 @@
                     </div>
                 </div>
 
+                <!-- English -->
                 <div x-show="activeTab === 'en'" class="space-y-4" style="display: none;">
                     <input type="hidden" th:field="*{translations['en'].lang}">
                     <input type="hidden" th:field="*{translations['en'].id}">
@@ -343,6 +387,7 @@
                     </div>
                 </div>
 
+                <!-- Deutsch -->
                 <div x-show="activeTab === 'de'" class="space-y-4" style="display: none;">
                     <input type="hidden" th:field="*{translations['de'].lang}">
                     <input type="hidden" th:field="*{translations['de'].id}">
@@ -392,6 +437,7 @@
             </div>
         </div>
 
+        <!-- Кнопки -->
         <div class="flex items-center justify-end gap-4">
             <a href="/admin/lessons"
                class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
@@ -415,21 +461,121 @@
                 textValues: {},
                 numberValues: {},
 
+                // Ціни
+                prices: [],
+
                 // Матеріали
                 materials: [],
 
                 init() {
                     console.log('Lesson form initialized');
 
-                    // Завантажуємо існуючі значення
+                    // Завантажуємо існуючі дані
                     this.loadExistingAttributes();
+                    this.loadExistingPrices();
                     this.loadExistingMaterials();
 
-                    // Генеруємо hidden inputs
+                    // Watchers
                     this.$watch('selectedOptions', () => this.generateHiddenInputs());
                     this.$watch('textValues', () => this.generateHiddenInputs());
                     this.$watch('numberValues', () => this.generateHiddenInputs());
-                    this.$watch('materials', () => this.generateMaterialsHiddenInputs(), { deep: true });
+                    this.$watch('prices', () => this.generatePriceInputs());
+                    this.$watch('materials', () => this.generateMaterialInputs());
+                },
+
+                // ========== ЦІНИ ==========
+
+                loadExistingPrices() {
+                    /*[# th:if="${lesson != null and lesson.prices != null}"]*/
+                    const existingPrices = /*[[${lesson.prices}]]*/ [];
+                    console.log('Loading existing prices:', existingPrices);
+
+                    this.prices = existingPrices.map(p => ({
+                        id: p.id,
+                        currency: p.currency,
+                        amount: p.amount
+                    }));
+                    /*[/]*/
+                },
+
+                addPrice() {
+                    this.prices.push({
+                        id: null,
+                        currency: '',
+                        amount: 0
+                    });
+                },
+
+                removePrice(index) {
+                    this.prices.splice(index, 1);
+                },
+
+                generatePriceInputs() {
+                    const container = document.getElementById('prices-hidden-inputs');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    this.prices.forEach((price, index) => {
+                        if (price.id) {
+                            container.innerHTML += `<input type="hidden" name="prices[${index}].id" value="${price.id}">`;
+                        }
+                        container.innerHTML += `<input type="hidden" name="prices[${index}].currency" value="${price.currency}">`;
+                        container.innerHTML += `<input type="hidden" name="prices[${index}].amount" value="${price.amount}">`;
+                    });
+
+                    console.log('Generated', this.prices.length, 'price inputs');
+                },
+
+                // ========== МАТЕРІАЛИ ==========
+
+                loadExistingMaterials() {
+                    /*[# th:if="${lesson != null and lesson.materials != null}"]*/
+                    const existingMaterials = /*[[${lesson.materials}]]*/ [];
+                    console.log('Loading existing materials:', existingMaterials);
+
+                    this.materials = existingMaterials.map(m => ({
+                        id: m.id,
+                        materialType: m.materialType,
+                        title: m.title || '',
+                        content: m.content,
+                        sortOrder: m.sortOrder
+                    }));
+                    /*[/]*/
+                },
+
+                addMaterial() {
+                    this.materials.push({
+                        id: null,
+                        materialType: '',
+                        title: '',
+                        content: '',
+                        sortOrder: this.materials.length
+                    });
+                },
+
+                removeMaterial(index) {
+                    this.materials.splice(index, 1);
+                },
+
+                generateMaterialInputs() {
+                    const container = document.getElementById('materials-hidden-inputs');
+                    if (!container) return;
+
+                    container.innerHTML = '';
+
+                    this.materials.forEach((material, index) => {
+                        if (material.id) {
+                            container.innerHTML += `<input type="hidden" name="materials[${index}].id" value="${material.id}">`;
+                        }
+                        // ВИПРАВЛЕНО: використовуємо material.materialType замість [[${type}]]
+                        container.innerHTML += `<input type="hidden" name="materials[${index}].materialType" value="${material.materialType}">`;
+                        container.innerHTML += `<input type="hidden" name="materials[${index}].title" value="${this.escapeHtml(material.title)}">`;
+                        container.innerHTML += `<input type="hidden" name="materials[${index}].content" value="${this.escapeHtml(material.content)}">`;
+                        container.innerHTML += `<input type="hidden" name="materials[${index}].sortOrder" value="${material.sortOrder}">`;
+                    });
+
+                    console.log('Generated', this.materials.length, 'material inputs');
                 },
 
                 // ========== АТРИБУТИ ==========
@@ -445,8 +591,7 @@
 
                     existingAttrs.forEach(attr => {
                         if (attr.optionId) {
-                            const value = `${attr.attributeId}-${attr.optionId}`;
-                            loadedOptions.push(value);
+                            loadedOptions.push(`${attr.attributeId}-${attr.optionId}`);
                         } else if (attr.textValue) {
                             loadedText[attr.attributeId] = attr.textValue;
                         } else if (attr.numberValue != null) {
@@ -495,7 +640,7 @@
                     container.innerHTML = '';
                     let index = 0;
 
-                    // Select/multiselect атрибути
+                    // Select/multiselect
                     this.selectedOptions.forEach(value => {
                         const [attributeId, optionId] = value.split('-');
 
@@ -517,7 +662,7 @@
                         index++;
                     });
 
-                    // Текстові атрибути
+                    // Text
                     Object.keys(this.textValues).forEach(attributeId => {
                         const value = this.textValues[attributeId];
                         if (!value || !value.trim()) return;
@@ -539,7 +684,7 @@
                         index++;
                     });
 
-                    // Числові атрибути
+                    // Number
                     Object.keys(this.numberValues).forEach(attributeId => {
                         const value = this.numberValues[attributeId];
                         if (value === '' || value === null) return;
@@ -563,83 +708,6 @@
 
                     console.log('Generated', index, 'attribute inputs');
                 },
-
-                // ========== МАТЕРІАЛИ ==========
-
-                loadExistingMaterials() {
-                    /*[# th:if="${lesson != null and lesson.materials != null}"]*/
-                    const existingMaterials = /*[[${lesson.materials}]]*/ [];
-                    console.log('Loading existing materials:', existingMaterials);
-
-                    // Сортуємо за sortOrder
-                    existingMaterials.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
-
-                    this.materials = existingMaterials.map(m => ({
-                        id: m.id,
-                        materialType: m.materialType,
-                        title: m.title || '',
-                        content: m.content || '',
-                        sortOrder: m.sortOrder || 0
-                    }));
-
-                    this.$nextTick(() => {
-                        this.generateMaterialsHiddenInputs();
-                    });
-                    /*[/]*/
-                },
-
-                addMaterial() {
-                    const newOrder = this.materials.length > 0
-                        ? Math.max(...this.materials.map(m => m.sortOrder || 0)) + 1
-                        : 0;
-
-                    this.materials.push({
-                        id: null,
-                        materialType: '',  // ВАЖЛИВО: порожній рядок, не null
-                        title: '',
-                        content: '',
-                        sortOrder: newOrder
-                    });
-                    console.log('Material added, total:', this.materials.length);
-                },
-
-                removeMaterial(index) {
-                    this.materials.splice(index, 1);
-                    console.log('Material removed, remaining:', this.materials.length);
-                },
-
-                generateMaterialsHiddenInputs() {
-                    const container = document.getElementById('materials-hidden-inputs');
-                    if (!container) {
-                        console.error('Materials hidden inputs container not found!');
-                        return;
-                    }
-
-                    container.innerHTML = '';
-                    let validIndex = 0;
-
-                    this.materials.forEach((material) => {
-                        // КРИТИЧНО: Пропускаємо матеріали без типу
-                        if (!material.materialType || material.materialType === '') {
-                            console.log('Skipping material without type:', material);
-                            return;
-                        }
-
-                        if (material.id) {
-                            container.innerHTML += `<input type="hidden" name="materials[${validIndex}].id" value="${material.id}">`;
-                        }
-                        container.innerHTML += `<input type="hidden" name="materials[${validIndex}].materialType" value="${material.materialType}">`;
-                        container.innerHTML += `<input type="hidden" name="materials[${validIndex}].title" value="${this.escapeHtml(material.title || '')}">`;
-                        container.innerHTML += `<input type="hidden" name="materials[${validIndex}].content" value="${this.escapeHtml(material.content || '')}">`;
-                        container.innerHTML += `<input type="hidden" name="materials[${validIndex}].sortOrder" value="${material.sortOrder || 0}">`;
-
-                        validIndex++;
-                    });
-
-                    console.log('Generated', validIndex, 'valid material inputs from', this.materials.length, 'total materials');
-                },
-
-                // ========== UTILITIES ==========
 
                 escapeHtml(text) {
                     if (typeof text !== 'string') return text;
