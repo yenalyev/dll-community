@@ -1,4 +1,4 @@
-package admin.dto;
+package dto;
 
 import entity.lesson.LessonMaterial;
 import lombok.*;

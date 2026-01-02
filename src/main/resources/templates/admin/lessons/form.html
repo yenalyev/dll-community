@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="uk" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/admin}">
+      layout:decorate="~{layout/admin}" xmlns:x-bind="http://www.w3.org/1999/xhtml">
 <head>
     <title th:text="${isEdit} ? 'Edit Lesson' : 'Create Lesson'">Lesson Form</title>
 </head>
@@ -122,6 +122,101 @@
 
             <div id="attributes-hidden-inputs">
             </div>
+        </div>
+
+        <!-- Матеріали уроку -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">Матеріали уроку</h3>
+                <button type="button"
+                        @click="addMaterial()"
+                        class="px-4 py-2 bg-warning text-gray-900 rounded-lg font-semibold hover:bg-yellow-500 transition flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Додати матеріал
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <template x-for="(material, index) in materials" :key="index">
+                    <div class="border-2 border-gray-200 rounded-lg p-6 relative">
+                        <button type="button"
+                                @click="removeMaterial(index)"
+                                class="absolute top-4 right-4 text-red-600 hover:text-red-700 transition">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 pr-12">
+                            <!-- Тип матеріалу -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Тип матеріалу <span class="text-red-500">*</span>
+                                </label>
+                                <select x-model="material.materialType"
+                                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition">
+                                    <option value="">Оберіть тип</option>
+                                    <option th:each="type : ${materialTypes}"
+                                            th:value="${type}"
+                                            th:text="${type}"
+                                            x-bind:value="type">Type</option>
+                                </select>
+                            </div>
+
+                            <!-- Порядок сортування -->
+                            <div>
+                                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Порядок
+                                </label>
+                                <input type="number"
+                                       x-model="material.sortOrder"
+                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                       placeholder="0">
+                            </div>
+
+                            <!-- Назва -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                    Назва
+                                </label>
+                                <input type="text"
+                                       x-model="material.title"
+                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                       placeholder="Назва матеріалу">
+                            </div>
+
+                            <!-- Контент (URL або текст) -->
+                            <div class="md:col-span-2">
+                                <label class="block text-sm font-semibold text-gray-900 mb-2">
+                                    <span x-show="material.materialType === 'TEXT_BLOCK'">Текст</span>
+                                    <span x-show="material.materialType !== 'TEXT_BLOCK'">URL</span>
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <textarea x-show="material.materialType === 'TEXT_BLOCK'"
+                                          x-model="material.content"
+                                          rows="4"
+                                          class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                          placeholder="Введіть текст"></textarea>
+                                <input x-show="material.materialType !== 'TEXT_BLOCK'"
+                                       type="url"
+                                       x-model="material.content"
+                                       class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition"
+                                       placeholder="https://example.com/file.pdf">
+                            </div>
+                        </div>
+                    </div>
+                </template>
+
+                <div x-show="materials.length === 0"
+                     class="text-center py-8 text-gray-500 border-2 border-dashed border-gray-300 rounded-lg">
+                    Немає матеріалів. Натисніть "Додати матеріал" щоб додати перший матеріал.
+                </div>
+            </div>
+
+            <!-- Hidden inputs для матеріалів -->
+            <div id="materials-hidden-inputs"></div>
         </div>
 
 
@@ -315,88 +410,66 @@
     <script th:inline="javascript">
         function lessonForm() {
             return {
-                // Зберігаємо обрані опції у форматі "attributeId-optionId"
+                // Атрибути
                 selectedOptions: [],
-
-                // Зберігаємо текстові та числові значення
                 textValues: {},
                 numberValues: {},
+
+                // Матеріали
+                materials: [],
 
                 init() {
                     console.log('Lesson form initialized');
 
-                    // Завантажуємо існуючі значення при редагуванні
+                    // Завантажуємо існуючі значення
                     this.loadExistingAttributes();
+                    this.loadExistingMaterials();
 
-                    // Генеруємо hidden inputs при завантаженні та при змінах
-                    // $watch спрацює автоматично, коли loadExistingAttributes оновить selectedOptions
+                    // Генеруємо hidden inputs
                     this.$watch('selectedOptions', () => this.generateHiddenInputs());
                     this.$watch('textValues', () => this.generateHiddenInputs());
                     this.$watch('numberValues', () => this.generateHiddenInputs());
+                    this.$watch('materials', () => this.generateMaterialsHiddenInputs(), { deep: true });
                 },
 
+                // ========== АТРИБУТИ ==========
+
                 loadExistingAttributes() {
-                    // Завантажуємо існуючі атрибути з Thymeleaf
                     /*[# th:if="${lesson != null and lesson.attributes != null}"]*/
                     const existingAttrs = /*[[${lesson.attributes}]]*/ [];
                     console.log('Loading existing attributes:', existingAttrs);
 
-                    // Створюємо тимчасові масиви, щоб не викликати $watch на кожній ітерації
                     let loadedOptions = [];
                     let loadedText = {};
                     let loadedNumbers = {};
 
                     existingAttrs.forEach(attr => {
                         if (attr.optionId) {
-                            // Select/multiselect атрибути
                             const value = `${attr.attributeId}-${attr.optionId}`;
                             loadedOptions.push(value);
-                            console.log('Loaded option:', value);
-
                         } else if (attr.textValue) {
-                            // Text атрибути
                             loadedText[attr.attributeId] = attr.textValue;
-                            console.log('Loaded text:', attr.attributeId, '=', attr.textValue);
-
                         } else if (attr.numberValue != null) {
-                            // Number атрибути
                             loadedNumbers[attr.attributeId] = attr.numberValue;
-                            console.log('Loaded number:', attr.attributeId, '=', attr.numberValue);
                         }
                     });
 
-                    // Присвоюємо один раз, щоб Alpine (x-model) оновив UI
-                    // і щоб спрацював $watch
                     this.selectedOptions = loadedOptions;
                     this.textValues = loadedText;
                     this.numberValues = loadedNumbers;
 
-                    // x-model оновить чекбокси автоматично.
-                    // $watch згенерує hidden inputs автоматично.
-
-                    // Ми можемо викликати generateHiddenInputs() тут для надійності,
-                    // якщо форма завантажується дуже швидко
                     this.$nextTick(() => {
                         this.generateHiddenInputs();
                     });
-
                     /*[/]*/
                 },
-
-                // *** ЗМІНА ***: Функція syncCheckboxes видалена.
-                // x-model автоматично синхронізує стан.
-
-                // *** ЗМІНА ***: Функція updateAttributeSelection видалена.
-                // x-model автоматично оновлює масив selectedOptions.
 
                 updateTextValue(attributeId, value) {
                     if (value && value.trim()) {
                         this.textValues[attributeId] = value;
                     } else {
-                        // Використовуємо delete, щоб $watch спрацював
                         delete this.textValues[attributeId];
                     }
-                    console.log('Updated text values:', this.textValues);
                 },
 
                 updateNumberValue(attributeId, value) {
@@ -405,7 +478,6 @@
                     } else {
                         delete this.numberValues[attributeId];
                     }
-                    console.log('Updated number values:', this.numberValues);
                 },
 
                 getTextValue(attributeId) {
@@ -418,19 +490,15 @@
 
                 generateHiddenInputs() {
                     const container = document.getElementById('attributes-hidden-inputs');
-                    if (!container) {
-                        console.error('Hidden inputs container not found!');
-                        return;
-                    }
+                    if (!container) return;
 
                     container.innerHTML = '';
                     let index = 0;
 
-                    // Додаємо hidden inputs для обраних опцій (select/multiselect)
+                    // Select/multiselect атрибути
                     this.selectedOptions.forEach(value => {
                         const [attributeId, optionId] = value.split('-');
 
-                        // Шукаємо існуючий ID (при редагуванні)
                         let existingId = null;
                         /*[# th:if="${lesson != null and lesson.attributes != null}"]*/
                         const existing = /*[[${lesson.attributes}]]*/ [];
@@ -441,26 +509,19 @@
                         if (found) existingId = found.id;
                         /*[/]*/
 
-                        // ID (якщо існує - для оновлення)
                         if (existingId) {
                             container.innerHTML += `<input type="hidden" name="attributes[${index}].id" value="${existingId}">`;
                         }
-
-                        // Attribute ID
                         container.innerHTML += `<input type="hidden" name="attributes[${index}].attributeId" value="${attributeId}">`;
-
-                        // Option ID
                         container.innerHTML += `<input type="hidden" name="attributes[${index}].optionId" value="${optionId}">`;
-
                         index++;
                     });
 
-                    // Додаємо hidden inputs для текстових значень
+                    // Текстові атрибути
                     Object.keys(this.textValues).forEach(attributeId => {
                         const value = this.textValues[attributeId];
                         if (!value || !value.trim()) return;
 
-                        // Шукаємо існуючий ID
                         let existingId = null;
                         /*[# th:if="${lesson != null and lesson.attributes != null}"]*/
                         const existing = /*[[${lesson.attributes}]]*/ [];
@@ -473,19 +534,16 @@
                         if (existingId) {
                             container.innerHTML += `<input type="hidden" name="attributes[${index}].id" value="${existingId}">`;
                         }
-
                         container.innerHTML += `<input type="hidden" name="attributes[${index}].attributeId" value="${attributeId}">`;
                         container.innerHTML += `<input type="hidden" name="attributes[${index}].textValue" value="${this.escapeHtml(value)}">`;
-
                         index++;
                     });
 
-                    // Додаємо hidden inputs для числових значень
+                    // Числові атрибути
                     Object.keys(this.numberValues).forEach(attributeId => {
                         const value = this.numberValues[attributeId];
                         if (value === '' || value === null) return;
 
-                        // Шукаємо існуючий ID
                         let existingId = null;
                         /*[# th:if="${lesson != null and lesson.attributes != null}"]*/
                         const existing = /*[[${lesson.attributes}]]*/ [];
@@ -498,15 +556,90 @@
                         if (existingId) {
                             container.innerHTML += `<input type="hidden" name="attributes[${index}].id" value="${existingId}">`;
                         }
-
                         container.innerHTML += `<input type="hidden" name="attributes[${index}].attributeId" value="${attributeId}">`;
                         container.innerHTML += `<input type="hidden" name="attributes[${index}].numberValue" value="${value}">`;
-
                         index++;
                     });
 
                     console.log('Generated', index, 'attribute inputs');
                 },
+
+                // ========== МАТЕРІАЛИ ==========
+
+                loadExistingMaterials() {
+                    /*[# th:if="${lesson != null and lesson.materials != null}"]*/
+                    const existingMaterials = /*[[${lesson.materials}]]*/ [];
+                    console.log('Loading existing materials:', existingMaterials);
+
+                    // Сортуємо за sortOrder
+                    existingMaterials.sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+                    this.materials = existingMaterials.map(m => ({
+                        id: m.id,
+                        materialType: m.materialType,
+                        title: m.title || '',
+                        content: m.content || '',
+                        sortOrder: m.sortOrder || 0
+                    }));
+
+                    this.$nextTick(() => {
+                        this.generateMaterialsHiddenInputs();
+                    });
+                    /*[/]*/
+                },
+
+                addMaterial() {
+                    const newOrder = this.materials.length > 0
+                        ? Math.max(...this.materials.map(m => m.sortOrder || 0)) + 1
+                        : 0;
+
+                    this.materials.push({
+                        id: null,
+                        materialType: '',  // ВАЖЛИВО: порожній рядок, не null
+                        title: '',
+                        content: '',
+                        sortOrder: newOrder
+                    });
+                    console.log('Material added, total:', this.materials.length);
+                },
+
+                removeMaterial(index) {
+                    this.materials.splice(index, 1);
+                    console.log('Material removed, remaining:', this.materials.length);
+                },
+
+                generateMaterialsHiddenInputs() {
+                    const container = document.getElementById('materials-hidden-inputs');
+                    if (!container) {
+                        console.error('Materials hidden inputs container not found!');
+                        return;
+                    }
+
+                    container.innerHTML = '';
+                    let validIndex = 0;
+
+                    this.materials.forEach((material) => {
+                        // КРИТИЧНО: Пропускаємо матеріали без типу
+                        if (!material.materialType || material.materialType === '') {
+                            console.log('Skipping material without type:', material);
+                            return;
+                        }
+
+                        if (material.id) {
+                            container.innerHTML += `<input type="hidden" name="materials[${validIndex}].id" value="${material.id}">`;
+                        }
+                        container.innerHTML += `<input type="hidden" name="materials[${validIndex}].materialType" value="${material.materialType}">`;
+                        container.innerHTML += `<input type="hidden" name="materials[${validIndex}].title" value="${this.escapeHtml(material.title || '')}">`;
+                        container.innerHTML += `<input type="hidden" name="materials[${validIndex}].content" value="${this.escapeHtml(material.content || '')}">`;
+                        container.innerHTML += `<input type="hidden" name="materials[${validIndex}].sortOrder" value="${material.sortOrder || 0}">`;
+
+                        validIndex++;
+                    });
+
+                    console.log('Generated', validIndex, 'valid material inputs from', this.materials.length, 'total materials');
+                },
+
+                // ========== UTILITIES ==========
 
                 escapeHtml(text) {
                     if (typeof text !== 'string') return text;

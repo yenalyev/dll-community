@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
+@Transactional
 public class LessonService {
 
     private final LessonRepository lessonRepository;
@@ -38,7 +38,6 @@ public class LessonService {
      */
     public LessonDto getLessonById(Long id) {
         log.info("Getting lesson by id: {}", id);
-
         Lesson lesson = findLessonWithAllDetails(id);
         return convertToDto(lesson);
     }
@@ -48,9 +47,7 @@ public class LessonService {
      */
     public List<LessonDto> getAllLessons() {
         log.info("Getting all lessons");
-
         List<Lesson> lessons = lessonRepository.findAllWithTranslations();
-
         return lessons.stream()
                 .map(this::convertToLightDto)
                 .collect(Collectors.toList());
@@ -69,11 +66,11 @@ public class LessonService {
 
         // Створення нової сутності
         Lesson lesson = new Lesson();
-        mapDtoToEntity(dto, lesson);
-
-        // Встановлення дат
         lesson.setCreatedAt(LocalDateTime.now());
         lesson.setUpdatedAt(LocalDateTime.now());
+
+        // Мапінг даних (включає обробку матеріалів, атрибутів, перекладів, цін)
+        mapDtoToEntity(dto, lesson);
 
         // Збереження
         Lesson saved = lessonRepository.save(lesson);
@@ -96,11 +93,11 @@ public class LessonService {
         validateLessonDto(dto);
         validateSlugsUniqueness(dto, id);
 
-        // Оновлення даних
-        mapDtoToEntity(dto, lesson);
-
         // Оновлення дати
         lesson.setUpdatedAt(LocalDateTime.now());
+
+        // Мапінг даних (включає обробку матеріалів, атрибутів, перекладів, цін)
+        mapDtoToEntity(dto, lesson);
 
         // Збереження
         Lesson updated = lessonRepository.save(lesson);
@@ -120,10 +117,21 @@ public class LessonService {
             throw new IllegalArgumentException("Lesson not found with id: " + id);
         }
 
-        // Можна додати перевірку на використання в замовленнях
-
         lessonRepository.deleteById(id);
         log.info("Lesson deleted successfully: id={}", id);
+    }
+
+    /**
+     * Отримати урок за slug та мовою
+     */
+    public LessonDto getLessonBySlugAndLang(String slug, String lang) {
+        log.info("Getting lesson by slug: {}, lang: {}", slug, lang);
+
+        Lesson lesson = lessonRepository.findBySlugAndLang(slug, lang)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "Lesson not found with slug: " + slug + " for language: " + lang));
+
+        return getLessonById(lesson.getId());
     }
 
     // ========== ДОПОМІЖНІ МЕТОДИ - ЗАВАНТАЖЕННЯ ==========
@@ -309,6 +317,8 @@ public class LessonService {
         updateAttributes(lesson, dto.getAttributes());
     }
 
+    // ========== МЕТОДИ ОНОВЛЕННЯ КОЛЕКЦІЙ ==========
+
     /**
      * Оновлення перекладів
      */
@@ -405,6 +415,9 @@ public class LessonService {
             lesson.setMaterials(new HashSet<>());
         }
 
+        log.info("Updating materials for lesson {}. Received {} material DTOs",
+                lesson.getId(), materialDtos != null ? materialDtos.size() : 0);
+
         // Збираємо ID матеріалів з DTO
         Set<Long> dtoMaterialIds = materialDtos.stream()
                 .map(LessonMaterialDto::getId)
@@ -416,8 +429,19 @@ public class LessonService {
                 material.getId() != null && !dtoMaterialIds.contains(material.getId())
         );
 
+        int addedCount = 0;
+        int updatedCount = 0;
+        int skippedCount = 0;
+
         // Додаємо або оновлюємо матеріали
         for (LessonMaterialDto dto : materialDtos) {
+            // КРИТИЧНО: Ігноруємо порожні матеріали (без типу)
+            if (dto == null || dto.getMaterialType() == null) {
+                skippedCount++;
+                log.debug("Skipping empty material DTO: {}", dto);
+                continue;
+            }
+
             if (dto.getId() != null) {
                 // Оновлюємо існуючий
                 Optional<LessonMaterial> existing = lesson.getMaterials().stream()
@@ -426,6 +450,9 @@ public class LessonService {
 
                 if (existing.isPresent()) {
                     updateMaterial(existing.get(), dto);
+                    updatedCount++;
+                    log.debug("Updated material: id={}, type={}, title={}",
+                            dto.getId(), dto.getMaterialType(), dto.getTitle());
                 }
             } else {
                 // Створюємо новий
@@ -433,8 +460,14 @@ public class LessonService {
                 material.setLesson(lesson);
                 updateMaterial(material, dto);
                 lesson.getMaterials().add(material);
+                addedCount++;
+                log.debug("Created material: type={}, title={}, sortOrder={}",
+                        dto.getMaterialType(), dto.getTitle(), dto.getSortOrder());
             }
         }
+
+        log.info("Materials processed: {} added, {} updated, {} skipped. Total materials: {}",
+                addedCount, updatedCount, skippedCount, lesson.getMaterials().size());
     }
 
     private void updateMaterial(LessonMaterial material, LessonMaterialDto dto) {
@@ -569,9 +602,6 @@ public class LessonService {
         return dto;
     }
 
-    /**
-     * Конвертація LessonAttribute Entity -> DTO
-     */
     private LessonAttributeDto convertLessonAttributeToDto(LessonAttribute lessonAttribute) {
         LessonAttributeDto dto = new LessonAttributeDto();
         dto.setId(lessonAttribute.getId());
@@ -588,18 +618,4 @@ public class LessonService {
 
         return dto;
     }
-
-    /**
-     * Отримати урок за slug та мовою
-     */
-    public LessonDto getLessonBySlugAndLang(String slug, String lang) {
-        log.info("Getting lesson by slug: {}, lang: {}", slug, lang);
-
-        Lesson lesson = lessonRepository.findBySlugAndLang(slug, lang)
-                .orElseThrow(() -> new IllegalArgumentException(
-                        "Lesson not found with slug: " + slug + " for language: " + lang));
-
-        return getLessonById(lesson.getId());
-    }
-
 }
