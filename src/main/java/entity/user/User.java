@@ -1,8 +1,11 @@
 package entity.user;
 
+import entity.enums.SubscriptionStatus;
+import entity.order.UserSubscription;
 import lombok.*;
 import javax.persistence.*;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 
 @Entity
@@ -44,5 +47,24 @@ public class User {
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
+    }
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
+    private Set<UserSubscription> subscriptions = new HashSet<>();
+
+    // Допоміжний метод для отримання активної підписки
+    @Transient
+    public UserSubscription getActiveSubscription() {
+        if (subscriptions == null) return null;
+        return subscriptions.stream()
+                .filter(sub -> sub.getStatus() == SubscriptionStatus.ACTIVE)
+                .filter(sub -> LocalDateTime.now().isBefore(sub.getEndDate()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    @Transient
+    public boolean hasActiveSubscription() {
+        return getActiveSubscription() != null;
     }
 }

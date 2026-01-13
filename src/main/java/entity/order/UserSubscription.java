@@ -8,7 +8,10 @@ import javax.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "user_subscription")
+@Table(name = "user_subscription", indexes = {
+        @Index(name = "idx_user_status", columnList = "user_id, status"),
+        @Index(name = "idx_end_date", columnList = "end_date")
+})
 @Data
 public class UserSubscription {
 
@@ -16,13 +19,18 @@ public class UserSubscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "user_id", nullable = false, unique = true)
+    // ⚠️ ЗМІНИТИ: Замість OneToOne зробити ManyToOne для історії підписок
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "subscription_plan_id", nullable = false)
     private SubscriptionPlan subscriptionPlan;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id") // Зв'язок з замовленням
+    private Order order;
 
     @Column(name = "start_date", nullable = false)
     private LocalDateTime startDate;
@@ -34,6 +42,28 @@ public class UserSubscription {
     @Column(name = "status", nullable = false, length = 20)
     private SubscriptionStatus status;
 
+    // ID підписки в платіжній системі (для авто-продовження)
     @Column(name = "gateway_subscription_id")
     private String gatewaySubscriptionId;
+
+    @Column(name = "auto_renew", nullable = false)
+    private Boolean autoRenew = false;
+
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @Column(name = "cancelled_at")
+    private LocalDateTime cancelledAt;
+
+    @PrePersist
+    protected void onCreate() {
+        createdAt = LocalDateTime.now();
+    }
+
+    // Метод для перевірки чи активна підписка
+    public boolean isActive() {
+        return status == SubscriptionStatus.ACTIVE &&
+                LocalDateTime.now().isBefore(endDate);
+    }
 }
+

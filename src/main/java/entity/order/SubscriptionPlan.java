@@ -6,7 +6,9 @@ import lombok.ToString;
 
 import javax.persistence.*;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Entity
 @Table(name = "subscription_plan")
@@ -25,11 +27,47 @@ public class SubscriptionPlan {
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SubscriptionPlanTranslation> translations = new ArrayList<>();
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<SubscriptionPlanTranslation> translations = new HashSet<>();
 
     @ToString.Exclude
     @EqualsAndHashCode.Exclude
-    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SubscriptionPlanPrice> prices = new ArrayList<>();
+    @OneToMany(mappedBy = "plan", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    private Set<SubscriptionPlanPrice> prices = new HashSet<>();
+
+    /**
+     * Отримати переклад для мови
+     */
+    public SubscriptionPlanTranslation getTranslation(String lang) {
+        return translations.stream()
+                .filter(t -> t.getLang().equalsIgnoreCase(lang))
+                .findFirst()
+                .orElse(translations.stream()
+                        .filter(t -> t.getLang().equalsIgnoreCase("uk"))
+                        .findFirst()
+                        .orElse(null));
+    }
+
+
+    /**
+     * Отримати ціну для валюти
+     */
+    public SubscriptionPlanPrice getPrice(String currency) {
+        return prices.stream()
+                .filter(p -> p.getCurrency().name().equalsIgnoreCase(currency))
+                .findFirst()
+                .orElseGet(() -> prices.stream()
+                        .findFirst()
+                        .orElse(null));
+    }
+
+    public String getNameForLang(String lang) {
+        SubscriptionPlanTranslation translation = getTranslation(lang);
+        return translation != null ? translation.getName() : "План підписки";
+    }
+
+    public String getDescriptionForLang(String lang) {
+        SubscriptionPlanTranslation translation = getTranslation(lang);
+        return translation != null ? translation.getDescription() : "";
+    }
 }

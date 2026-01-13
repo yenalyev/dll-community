@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<head>
+  <title th:text="#{cabinet.subscription.title}">Моя підписка</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- Поточна підписка -->
+  <div th:if="${activeSubscription}" class="bg-white rounded-lg shadow-md p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+      <h2 class="text-2xl font-bold" th:text="#{cabinet.subscription.current}">
+        Поточна підписка
+      </h2>
+      <span class="bg-green-100 text-green-800 px-4 py-1 rounded-full text-sm font-medium">
+                <span th:text="#{cabinet.subscription.active}">Активна</span>
+            </span>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-6">
+      <div>
+        <p class="text-gray-600 text-sm mb-1" th:text="#{cabinet.subscription.plan}">План</p>
+        <p class="text-lg font-semibold"
+           th:text="${activeSubscription.subscriptionPlan.translations[0].name}">
+          Місячна підписка
+        </p>
+      </div>
+      <div>
+        <p class="text-gray-600 text-sm mb-1" th:text="#{cabinet.subscription.valid_until}">
+          Діє до
+        </p>
+        <p class="text-lg font-semibold"
+           th:text="${#temporals.format(activeSubscription.endDate, 'dd MMMM yyyy')}">
+          31 грудня 2025
+        </p>
+      </div>
+    </div>
+
+    <div class="mt-6 pt-6 border-t">
+      <button onclick="cancelSubscription()"
+              class="text-red-600 hover:text-red-800 font-medium">
+        <span th:text="#{cabinet.subscription.cancel}">Скасувати підписку</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Доступні плани -->
+  <div>
+    <h2 class="text-2xl font-bold mb-6" th:text="#{subscription.available_plans}">
+      Доступні тарифні плани
+    </h2>
+
+    <div class="grid md:grid-cols-3 gap-6">
+      <div th:each="plan : ${subscriptionPlans}"
+           class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
+
+        <!-- Назва плану -->
+        <h3 class="text-xl font-bold mb-2"
+            th:text="${plan.translations[0].name}">
+          Місячна підписка
+        </h3>
+
+        <!-- Опис -->
+        <p class="text-gray-600 text-sm mb-4"
+           th:text="${plan.translations[0].description}">
+          Доступ до всіх матеріалів на 30 днів
+        </p>
+
+        <!-- Ціна -->
+        <div class="mb-6">
+                    <span class="text-3xl font-bold"
+                          th:text="${plan.prices[0].amount / 100}">299</span>
+          <span class="text-xl text-gray-600"
+                th:text="${plan.prices[0].currency}">UAH</span>
+          <p class="text-gray-500 text-sm mt-1">
+            <span th:text="${plan.durationInDays}">30</span>
+            <span th:text="#{subscription.days}">днів</span>
+          </p>
+        </div>
+
+        <!-- Кнопка покупки -->
+        <form th:action="@{/{lang}/subscription/purchase/{id}(lang=${lang}, id=${plan.id})}"
+              method="post">
+          <button type="submit"
+                  class="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-3 rounded-lg transition">
+            <span th:text="#{subscription.buy}">Купити підписку</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script layout:fragment="scripts">
+  function cancelSubscription() {
+    if (confirm('Ви впевнені що хочете скасувати підписку?')) {
+      fetch('[[${#httpServletRequest.contextPath}]]/[[${lang}]]/cabinet/subscription/[[${activeSubscription.id}]]/cancel', {
+        method: 'POST'
+      })
+              .then(response => response.json())
+              .then(data => {
+                if (data.success) {
+                  alert('Підписку скасовано');
+                  location.reload();
+                } else {
+                  alert('Помилка: ' + data.message);
+                }
+              });
+    }
+  }
+</script>
+</body>
+</html>

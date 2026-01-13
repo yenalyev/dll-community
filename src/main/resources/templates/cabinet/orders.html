@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<head>
+  <title th:text="#{cabinet.orders.title}">Мої замовлення</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="max-w-7xl mx-auto px-4 py-8">
+
+  <h1 class="text-3xl font-bold mb-8" th:text="#{cabinet.orders.title}">
+    Історія замовлень
+  </h1>
+
+  <div th:if="${#lists.isEmpty(orders)}" class="bg-white rounded-lg shadow-md p-8 text-center">
+    <p class="text-gray-600" th:text="#{cabinet.orders.empty}">
+      У вас поки немає замовлень
+    </p>
+  </div>
+
+  <div th:unless="${#lists.isEmpty(orders)}" class="space-y-4">
+    <div th:each="order : ${orders}"
+         class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+
+      <div class="flex items-center justify-between">
+        <div>
+          <p class="font-semibold text-lg">
+            <span th:text="#{cabinet.orders.order}">Замовлення</span>
+            #<span th:text="${order.id}">123</span>
+          </p>
+          <p class="text-gray-600 text-sm mt-1">
+                        <span th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}">
+                            15.11.2024 14:30
+                        </span>
+          </p>
+        </div>
+
+        <div class="text-right">
+          <p class="text-xl font-bold">
+            <span th:text="${order.totalAmount / 100}">299</span>
+            <span th:text="${order.currency}">UAH</span>
+          </p>
+          <span th:class="${order.status.name() == 'COMPLETED' ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}"
+                class="px-3 py-1 rounded-full text-sm font-medium mt-2 inline-block">
+                        <span th:text="${order.status}">COMPLETED</span>
+                    </span>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-4 border-t">
+        <a th:href="@{/{lang}/cabinet/orders/{id}(lang=${lang}, id=${order.id})}"
+           class="text-yellow-600 hover:text-yellow-700 font-medium text-sm">
+          <span th:text="#{cabinet.orders.view_details}">Переглянути деталі →</span>
+        </a>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

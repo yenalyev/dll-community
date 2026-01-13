@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<head>
+  <title th:text="#{cabinet.dashboard.title}">Мій кабінет</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="max-w-7xl mx-auto px-4 py-8">
+
+  <!-- Заголовок -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold" th:text="#{cabinet.dashboard.welcome} + ' ' + ${user.name}">
+      Вітаємо, Ім'я!
+    </h1>
+    <p class="text-gray-600 mt-2" th:text="#{cabinet.dashboard.subtitle}">
+      Керуйте своїм акаунтом та підпискою
+    </p>
+  </div>
+
+  <!-- Статус підписки -->
+  <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+    <h2 class="text-xl font-semibold mb-4" th:text="#{cabinet.subscription.status}">
+      Статус підписки
+    </h2>
+
+    <div th:if="${hasActiveSubscription}" class="flex items-center justify-between">
+      <div>
+        <p class="text-lg font-medium text-green-600" th:text="#{cabinet.subscription.active}">
+          ✓ Активна підписка
+        </p>
+        <p class="text-gray-600 mt-1">
+          <span th:text="#{cabinet.subscription.valid_until}">Діє до:</span>
+          <span th:text="${#temporals.format(activeSubscription.endDate, 'dd.MM.yyyy HH:mm')}">
+                        31.12.2025 23:59
+                    </span>
+        </p>
+        <p class="text-gray-600 text-sm mt-1">
+          <span th:text="#{cabinet.subscription.plan}">План:</span>
+          <span th:text="${activeSubscription.subscriptionPlan.translations[0].name}">
+                        Місячна підписка
+                    </span>
+        </p>
+      </div>
+      <a th:href="@{/{lang}/cabinet/subscription(lang=${#locale.language})}"
+         class="bg-yellow-400 hover:bg-yellow-500 text-black px-6 py-2 rounded-lg font-medium transition">
+        <span th:text="#{cabinet.subscription.manage}">Керувати підпискою</span>
+      </a>
+    </div>
+
+    <div th:unless="${hasActiveSubscription}" class="text-center py-8">
+      <p class="text-lg text-gray-600 mb-4" th:text="#{cabinet.subscription.no_active}">
+        У вас немає активної підписки
+      </p>
+      <a th:href="@{/{lang}/subscription(lang=${#locale.language})}"
+         class="bg-yellow-400 hover:bg-yellow-500 text-black px-8 py-3 rounded-lg font-medium inline-block transition">
+        <span th:text="#{cabinet.subscription.choose_plan}">Обрати тарифний план</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Швидкі дії -->
+  <div class="grid md:grid-cols-3 gap-6 mb-8">
+    <!-- Мої уроки -->
+    <a th:href="@{/{lang}/lessons(lang=${#locale.language})}"
+       class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <div class="text-4xl mb-3">📚</div>
+      <h3 class="text-lg font-semibold mb-2" th:text="#{cabinet.quick_actions.my_lessons}">
+        Мої уроки
+      </h3>
+      <p class="text-gray-600 text-sm" th:text="#{cabinet.quick_actions.my_lessons_desc}">
+        Перегляньте доступні навчальні матеріали
+      </p>
+    </a>
+
+    <!-- Історія замовлень -->
+    <a th:href="@{/{lang}/cabinet/orders(lang=${#locale.language})}"
+       class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <div class="text-4xl mb-3">🧾</div>
+      <h3 class="text-lg font-semibold mb-2" th:text="#{cabinet.quick_actions.orders}">
+        Мої замовлення
+      </h3>
+      <p class="text-gray-600 text-sm" th:text="#{cabinet.quick_actions.orders_desc}">
+        Історія покупок та платежів
+      </p>
+    </a>
+
+    <!-- Налаштування -->
+    <a th:href="@{/{lang}/cabinet/settings(lang=${#locale.language})}"
+       class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition">
+      <div class="text-4xl mb-3">⚙️</div>
+      <h3 class="text-lg font-semibold mb-2" th:text="#{cabinet.quick_actions.settings}">
+        Налаштування
+      </h3>
+      <p class="text-gray-600 text-sm" th:text="#{cabinet.quick_actions.settings_desc}">
+        Керуйте своїм профілем
+      </p>
+    </a>
+  </div>
+
+  <!-- Статистика (опціонально) -->
+  <div class="bg-white rounded-lg shadow-md p-6">
+    <h2 class="text-xl font-semibold mb-4" th:text="#{cabinet.statistics.title}">
+      Статистика
+    </h2>
+    <div class="grid md:grid-cols-3 gap-4">
+      <div class="text-center">
+        <p class="text-3xl font-bold text-yellow-600">42</p>
+        <p class="text-gray-600 text-sm mt-1" th:text="#{cabinet.statistics.lessons_accessed}">
+          Переглянуто уроків
+        </p>
+      </div>
+      <div class="text-center">
+        <p class="text-3xl font-bold text-yellow-600">120</p>
+        <p class="text-gray-600 text-sm mt-1" th:text="#{cabinet.statistics.materials_downloaded}">
+          Завантажено матеріалів
+        </p>
+      </div>
+      <div class="text-center">
+        <p class="text-3xl font-bold text-yellow-600"
+           th:text="${hasActiveSubscription} ? ${#temporals.format(activeSubscription.startDate, 'dd.MM.yyyy')} : '-'">
+          15.11.2024
+        </p>
+        <p class="text-gray-600 text-sm mt-1" th:text="#{cabinet.statistics.member_since}">
+          Користувач з
+        </p>
+      </div>
+    </div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,6 +1,7 @@
 package entity.enums;
 
 public enum OrderType {
-    SINGLE_PURCHASE,
-    SUBSCRIPTION
+    LESSON_PURCHASE,        // Покупка окремого уроку
+    SUBSCRIPTION_PURCHASE,  // Покупка/продовження підписки
+    PROMO_ACTIVATION        // Активація промо-коду
 }

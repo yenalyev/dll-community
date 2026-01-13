@@ -1,6 +1,7 @@
 package platform.config;
 
 import entity.enums.Language;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.LocaleResolver;
@@ -11,7 +12,12 @@ import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import java.util.Locale;
 
 @Configuration
+@RequiredArgsConstructor  // <-- ДОДАТИ ЦЮ АНОТАЦІЮ для DI
 public class LocaleConfig implements WebMvcConfigurer {
+
+    // ===== ДОДАТИ ЦЕ ПОЛЕ =====
+    private final SubscriptionStatusInterceptor subscriptionStatusInterceptor;
+    // =========================
 
     /**
      * LocaleResolver визначає, яка мова використовується.
@@ -30,16 +36,30 @@ public class LocaleConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+        // ===== 1. LOCALE INTERCEPTOR (існуючий) =====
         registry.addInterceptor(new PathLocaleInterceptor())
-                // Виключаємо шляхи, які не повинні оброблятися
-                // перехоплювачем мови
                 .excludePathPatterns(
-                        "/admin/**",      // Вся адмін-панель
-                        "/css/**",        // Статичні ресурси
+                        "/admin/**",
+                        "/css/**",
                         "/js/**",
                         "/images/**",
                         "/webjars/**",
-                        "/error"          // Сторінка помилок Spring
-                );
+                        "/error"
+                )
+                .order(0);  // <-- Виконується ПЕРШИМ
+
+        // ===== 2. SUBSCRIPTION STATUS INTERCEPTOR (НОВИЙ) =====
+        registry.addInterceptor(subscriptionStatusInterceptor)
+                .addPathPatterns("/**")  // Всі шляхи
+                .excludePathPatterns(
+                        "/css/**",        // Статичні ресурси
+                        "/js/**",
+                        "/images/**",
+                        "/uploads/**",    // Завантажені файли
+                        "/webjars/**",
+                        "/api/**",        // REST API
+                        "/error"          // Сторінка помилок
+                )
+                .order(1);  // <-- Виконується ДРУГИМ
     }
 }

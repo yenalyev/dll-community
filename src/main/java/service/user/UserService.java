@@ -176,4 +176,16 @@ public class UserService {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + email));
     }
+
+    /**
+     * Зберегти або оновити користувача
+     */
+    @Transactional
+    public User save(User user) {
+        log.debug("Saving user: {}", user.getId() != null ? user.getId() : "new user");
+        User savedUser = userRepository.save(user);
+        log.info("User saved successfully: {}", savedUser.getId());
+        return savedUser;
+    }
+
 }

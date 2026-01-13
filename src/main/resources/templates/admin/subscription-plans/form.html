@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin}">
+<head>
+    <title th:text="${isEdit} ? 'Редагування плану' : 'Створення плану'">Плани підписок</title>
+</head>
+<body>
+<div layout:fragment="content">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <!-- Header -->
+        <div class="mb-6">
+            <a th:href="@{/admin/subscription-plans}"
+               class="text-yellow-600 hover:text-yellow-700 mb-2 inline-block">
+                ← Назад до списку
+            </a>
+            <h1 class="text-3xl font-bold"
+                th:text="${isEdit} ? 'Редагування плану підписки' : 'Створення нового плану'">
+                Створення плану
+            </h1>
+        </div>
+
+        <!-- Error Messages -->
+        <div th:if="${errorMessage}"
+             class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4"
+             role="alert">
+            <span th:text="${errorMessage}"></span>
+        </div>
+
+        <!-- Form -->
+        <form th:action="${isEdit} ? @{/admin/subscription-plans/{id}(id=${planDTO.id})} : @{/admin/subscription-plans}"
+              method="post"
+              th:object="${planDTO}"
+              class="bg-white rounded-lg shadow-lg p-6"
+              x-data="planForm()">
+
+            <!-- Basic Info -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Основна інформація</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- Duration -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Тривалість (днів) <span class="text-red-500">*</span>
+                        </label>
+                        <input type="number"
+                               th:field="*{durationInDays}"
+                               class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent"
+                               placeholder="30"
+                               min="1"
+                               required>
+                        <p th:if="${#fields.hasErrors('durationInDays')}"
+                           th:errors="*{durationInDays}"
+                           class="text-red-500 text-sm mt-1"></p>
+                    </div>
+
+                    <!-- Active Status -->
+                    <div>
+                        <label class="block text-sm font-semibold text-gray-700 mb-2">
+                            Статус
+                        </label>
+                        <div class="flex items-center h-10">
+                            <label class="flex items-center cursor-pointer">
+                                <input type="checkbox"
+                                       th:field="*{isActive}"
+                                       class="w-5 h-5 text-yellow-400 focus:ring-yellow-400 border-gray-300 rounded">
+                                <span class="ml-2 text-gray-700">Активний</span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Translations -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Переклади</h2>
+
+                <div class="space-y-4">
+                    <div th:each="translation, iterStat : *{translations}"
+                         class="bg-gray-50 p-4 rounded-lg border-2 border-gray-200">
+
+                        <input type="hidden"
+                               th:field="*{translations[__${iterStat.index}__].id}">
+
+                        <!-- Language -->
+                        <div class="mb-3">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Мова <span class="text-red-500">*</span>
+                            </label>
+                            <select th:field="*{translations[__${iterStat.index}__].lang}"
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
+                                    required>
+                                <option value="ua">🇺🇦 Українська</option>
+                                <option value="en">🇬🇧 English</option>
+                                <option value="de">🇩🇪 Deutsch</option>
+                            </select>
+                        </div>
+
+                        <!-- Name -->
+                        <div class="mb-3">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Назва <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   th:field="*{translations[__${iterStat.index}__].name}"
+                                   class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
+                                   placeholder="Місячна підписка"
+                                   required>
+                            <p th:if="${#fields.hasErrors('translations[__${iterStat.index}__].name')}"
+                               th:errors="*{translations[__${iterStat.index}__].name}"
+                               class="text-red-500 text-sm mt-1"></p>
+                        </div>
+
+                        <!-- Description -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Опис
+                            </label>
+                            <textarea th:field="*{translations[__${iterStat.index}__].description}"
+                                      class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
+                                      rows="3"
+                                      placeholder="Опис переваг цього плану"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Prices -->
+            <div class="mb-6">
+                <h2 class="text-xl font-bold mb-4 text-gray-800">Ціни</h2>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div th:each="price, iterStat : *{prices}"
+                         class="bg-yellow-50 p-4 rounded-lg border-2 border-yellow-300">
+
+                        <input type="hidden"
+                               th:field="*{prices[__${iterStat.index}__].id}">
+
+                        <!-- Currency -->
+                        <div class="mb-3">
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Валюта <span class="text-red-500">*</span>
+                            </label>
+                            <select th:field="*{prices[__${iterStat.index}__].currency}"
+                                    class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
+                                    required>
+                                <option th:each="currency : ${currencies}"
+                                        th:value="${currency}"
+                                        th:text="${currency}">UAH</option>
+                            </select>
+                        </div>
+
+                        <!-- Amount -->
+                        <div>
+                            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                                Сума (в копійках/центах) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number"
+                                   th:field="*{prices[__${iterStat.index}__].amount}"
+                                   class="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-yellow-400"
+                                   placeholder="10000"
+                                   min="1"
+                                   step="1"
+                                   required
+                                   x-model="prices[${iterStat.index}]">
+                            <p class="text-xs text-gray-500 mt-1">
+                                = <span x-text="formatPrice(prices[${iterStat.index}])">0.00</span>
+                            </p>
+                            <p th:if="${#fields.hasErrors('prices[__${iterStat.index}__].amount')}"
+                               th:errors="*{prices[__${iterStat.index}__].amount}"
+                               class="text-red-500 text-sm mt-1"></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="flex gap-4 justify-end">
+                <a th:href="@{/admin/subscription-plans}"
+                   class="px-6 py-2 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition">
+                    Скасувати
+                </a>
+                <button type="submit"
+                        class="px-6 py-2 bg-yellow-400 hover:bg-yellow-500 text-black font-semibold rounded-lg transition">
+                    <span th:if="${isEdit}">💾 Зберегти зміни</span>
+                    <span th:unless="${isEdit}">➕ Створити план</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Alpine.js Component -->
+    <script>
+        function planForm() {
+            return {
+                prices: [0, 0, 0],
+
+                formatPrice(amount) {
+                    if (!amount) return '0.00';
+                    return (amount / 100).toFixed(2);
+                }
+            }
+        }
+    </script>
+</div>
+</body>
+</html>
