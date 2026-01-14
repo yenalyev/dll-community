@@ -61,11 +61,18 @@ public class SecurityConfig {
                 )
 
                 // --- 4. Налаштування форми входу ---
+                // --- 4. Налаштування форми входу ---
                 .formLogin(formLogin -> formLogin
                         .loginPage("/login")
-                        .loginProcessingUrl("/login") // БЕЗ {lang}!
-                        .defaultSuccessUrl("/", true)
-                        .failureUrl("/login?error=true")
+                        .loginProcessingUrl("/*/login") // Працює з /uk/login, /en/login, /de/login
+                        .successHandler((request, response, authentication) -> {
+                            String lang = extractLangFromUrl(request);
+                            response.sendRedirect("/" + lang + "/");
+                        })
+                        .failureHandler((request, response, exception) -> {
+                            String lang = extractLangFromUrl(request);
+                            response.sendRedirect("/" + lang + "/login?error=true");
+                        })
                         .usernameParameter("username")
                         .passwordParameter("password")
                 )
@@ -80,7 +87,10 @@ public class SecurityConfig {
                 // --- 6. Налаштування виходу ---
                 .logout(logout -> logout
                         .logoutUrl("/logout")
-                        .logoutSuccessUrl("/login?logout=true")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                            String lang = extractLangFromUrl(request);
+                            response.sendRedirect("/" + lang + "/login?logout=true");
+                        })
                         .invalidateHttpSession(true)
                         .deleteCookies("JSESSIONID", "remember-me")
                         .permitAll()

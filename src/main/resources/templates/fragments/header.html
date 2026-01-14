@@ -160,17 +160,20 @@
                                 </a>
                             </div>
 
-                            <!-- Вихід -->
+                            <!-- Десктопне меню - вихід -->
                             <div class="border-t border-gray-200 pt-2">
-                                <form method="post" th:action="@{/logout}">
+                                <a href="#"
+                                   @click.prevent="document.getElementById('logoutForm').submit()"
+                                   class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
+                                    <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                                    </svg>
+                                    <span th:text="#{nav.logout}">Вихід</span>
+                                </a>
+
+                                <!-- Прихована форма logout -->
+                                <form id="logoutForm" method="post" th:action="@{/logout}" style="display: none;">
                                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                                    <button type="submit"
-                                            class="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition">
-                                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                                        </svg>
-                                        <span th:text="#{nav.logout}">Вихід</span>
-                                    </button>
                                 </form>
                             </div>
                         </div>
@@ -264,16 +267,19 @@
 
                     <hr class="border-gray-400 my-2">
 
-                    <!-- Вихід -->
-                    <form method="post" th:action="@{/logout}">
+                    <!-- Вихід мобільний -->
+                    <a href="#"
+                       @click.prevent="document.getElementById('logoutFormMobile').submit()"
+                       class="flex items-center text-red-600 font-semibold py-2 w-full hover:text-red-800">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                        </svg>
+                        <span th:text="#{nav.logout}">Вихід</span>
+                    </a>
+
+                    <!-- Прихована форма logout для мобільного -->
+                    <form id="logoutFormMobile" method="post" th:action="@{/logout}" style="display: none;">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
-                        <button type="submit"
-                                class="flex items-center text-red-600 font-semibold py-2 w-full hover:text-red-800">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                            </svg>
-                            <span th:text="#{nav.logout}">Вихід</span>
-                        </button>
                     </form>
                 </div>
 
