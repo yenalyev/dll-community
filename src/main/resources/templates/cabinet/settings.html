@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<head>
+    <title th:text="#{cabinet.settings.title}">Налаштування профілю</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- Заголовок сторінки -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900" th:text="#{cabinet.settings.title}">
+            Налаштування профілю
+        </h1>
+        <p class="text-gray-600 mt-2" th:text="#{cabinet.settings.subtitle}">
+            Керуйте своїм профілем та налаштуваннями акаунту
+        </p>
+    </div>
+
+    <!-- Повідомлення про успіх/помилку -->
+    <div th:if="${success}"
+         class="bg-green-50 border border-green-200 rounded-lg p-4 mb-6 flex items-center">
+        <svg class="w-5 h-5 text-green-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span class="text-green-800 font-medium" th:text="#{cabinet.settings.saved}">
+      Зміни успішно збережено
+    </span>
+    </div>
+
+    <div th:if="${error}"
+         class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6 flex items-center">
+        <svg class="w-5 h-5 text-red-500 mr-3" fill="currentColor" viewBox="0 0 20 20">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+        </svg>
+        <span class="text-red-800 font-medium" th:text="${errorMessage ?: #{cabinet.settings.error}}">
+      Помилка збереження налаштувань
+    </span>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-8">
+
+        <!-- Ліва колонка - навігація -->
+        <div class="lg:col-span-1">
+            <div class="bg-white rounded-lg shadow-md p-4 sticky top-4">
+                <nav class="space-y-1">
+                    <a href="#profile"
+                       class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition settings-nav-link active">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                        </svg>
+                        <span th:text="#{cabinet.settings.profile}">Профіль</span>
+                    </a>
+
+                    <a href="#security"
+                       class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition settings-nav-link">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                        <span th:text="#{cabinet.settings.security}">Безпека</span>
+                    </a>
+
+                    <a href="#preferences"
+                       class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition settings-nav-link">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                        </svg>
+                        <span th:text="#{cabinet.settings.preferences}">Налаштування</span>
+                    </a>
+
+                    <a href="#danger"
+                       class="flex items-center px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg transition settings-nav-link">
+                        <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                        </svg>
+                        <span th:text="#{cabinet.settings.danger_zone}">Небезпечна зона</span>
+                    </a>
+                </nav>
+            </div>
+        </div>
+
+        <!-- Права колонка - контент -->
+        <div class="lg:col-span-2 space-y-6">
+
+            <!-- Секція: Профіль -->
+            <div id="profile" class="bg-white rounded-lg shadow-md p-6 scroll-mt-4">
+                <h2 class="text-xl font-bold mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
+                    </svg>
+                    <span th:text="#{cabinet.settings.profile_info}">Інформація профілю</span>
+                </h2>
+
+                <form th:action="@{/{lang}/cabinet/settings/profile(lang=${lang})}"
+                      method="post"
+                      class="space-y-4">
+
+                    <!-- Ім'я -->
+                    <div>
+                        <label for="name"
+                               class="block text-sm font-medium text-gray-700 mb-2"
+                               th:text="#{cabinet.settings.name}">
+                            Ім'я
+                        </label>
+                        <input type="text"
+                               id="name"
+                               name="name"
+                               th:value="${user?.name}"
+                               required
+                               maxlength="100"
+                               class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition"
+                               th:placeholder="#{cabinet.settings.name.placeholder}">
+                    </div>
+
+                    <!-- Email (тільки для відображення) -->
+                    <div>
+                        <label for="email"
+                               class="block text-sm font-medium text-gray-700 mb-2"
+                               th:text="#{cabinet.settings.email}">
+                            Email
+                        </label>
+                        <input type="email"
+                               id="email"
+                               th:value="${user?.primaryEmail}"
+                               readonly
+                               disabled
+                               class="w-full px-4 py-2 bg-gray-100 border border-gray-300 rounded-lg text-gray-600 cursor-not-allowed">
+                        <p class="text-xs text-gray-500 mt-1" th:text="#{cabinet.settings.email.readonly}">
+                            Email неможливо змінити
+                        </p>
+                    </div>
+
+                    <!-- Дата реєстрації (інформаційне поле) -->
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2"
+                               th:text="#{cabinet.settings.member_since}">
+                            Зареєстрований з
+                        </label>
+                        <p class="text-gray-900 font-medium"
+                           th:text="${user?.createdAt != null ? #temporals.format(user.createdAt, 'dd MMMM yyyy') : 'N/A'}">
+                            15 січня 2024
+                        </p>
+                    </div>
+
+                    <!-- Кнопка збереження -->
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="w-full md:w-auto px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-black font-medium rounded-lg transition">
+                            <span th:text="#{cabinet.settings.save}">Зберегти зміни</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Секція: Безпека -->
+            <div id="security" class="bg-white rounded-lg shadow-md p-6 scroll-mt-4">
+                <h2 class="text-xl font-bold mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
+                    <span th:text="#{cabinet.settings.change_password}">Зміна пароля</span>
+                </h2>
+
+                <!-- Показувати тільки якщо користувач НЕ через OAuth2 -->
+                <div th:if="${!user.OAuthUser}">
+                    <form th:action="@{/{lang}/cabinet/settings/password(lang=${lang})}"
+                          method="post"
+                          id="passwordForm"
+                          class="space-y-4">
+
+                        <!-- Поточний пароль -->
+                        <div>
+                            <label for="currentPassword"
+                                   class="block text-sm font-medium text-gray-700 mb-2"
+                                   th:text="#{cabinet.settings.current_password}">
+                                Поточний пароль
+                            </label>
+                            <input type="password"
+                                   id="currentPassword"
+                                   name="currentPassword"
+                                   required
+                                   minlength="8"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
+                        </div>
+
+                        <!-- Новий пароль -->
+                        <div>
+                            <label for="newPassword"
+                                   class="block text-sm font-medium text-gray-700 mb-2"
+                                   th:text="#{cabinet.settings.new_password}">
+                                Новий пароль
+                            </label>
+                            <input type="password"
+                                   id="newPassword"
+                                   name="newPassword"
+                                   required
+                                   minlength="8"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
+                            <p class="text-xs text-gray-500 mt-1" th:text="#{cabinet.settings.password.requirements}">
+                                Мінімум 8 символів
+                            </p>
+                        </div>
+
+                        <!-- Підтвердження нового пароля -->
+                        <div>
+                            <label for="confirmPassword"
+                                   class="block text-sm font-medium text-gray-700 mb-2"
+                                   th:text="#{cabinet.settings.confirm_password}">
+                                Підтвердіть новий пароль
+                            </label>
+                            <input type="password"
+                                   id="confirmPassword"
+                                   name="confirmPassword"
+                                   required
+                                   minlength="8"
+                                   class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
+                        </div>
+
+                        <!-- Кнопка зміни пароля -->
+                        <div class="pt-4">
+                            <button type="submit"
+                                    class="w-full md:w-auto px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-black font-medium rounded-lg transition">
+                                <span th:text="#{cabinet.settings.change_password}">Змінити пароль</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Повідомлення для OAuth2 користувачів -->
+                <div th:if="${user.OAuthUser}"
+                     class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <div class="flex">
+                        <svg class="w-5 h-5 text-blue-500 mr-3 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 20 20">
+                            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+                        </svg>
+                        <div>
+                            <p class="font-medium text-blue-900">
+                                <span th:text="#{cabinet.settings.oauth_account_prefix}">Ви увійшли через</span>
+                                <span th:text="${user.authProvider}">Google</span>
+                            </p>
+                            <p class="text-sm text-blue-700 mt-1" th:text="#{cabinet.settings.oauth_password}">
+                                Зміна пароля доступна тільки для облікових записів з паролем
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Секція: Налаштування -->
+            <div id="preferences" class="bg-white rounded-lg shadow-md p-6 scroll-mt-4">
+                <h2 class="text-xl font-bold mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span th:text="#{cabinet.settings.preferences}">Налаштування</span>
+                </h2>
+
+                <form th:action="@{/{lang}/cabinet/settings/preferences(lang=${lang})}"
+                      method="post"
+                      class="space-y-6">
+
+                    <!-- Мова інтерфейсу -->
+                    <div>
+                        <label for="language"
+                               class="block text-sm font-medium text-gray-700 mb-2"
+                               th:text="#{cabinet.settings.language}">
+                            Мова інтерфейсу
+                        </label>
+                        <select id="language"
+                                name="interfaceLanguage"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
+                            <option value="uk"
+                                    th:selected="${user.interfaceLanguage == 'uk'}"
+                                    th:text="#{language.ukrainian}">Українська</option>
+                            <option value="en"
+                                    th:selected="${user.interfaceLanguage == 'en'}"
+                                    th:text="#{language.english}">English</option>
+                            <option value="de"
+                                    th:selected="${user.interfaceLanguage == 'de'}"
+                                    th:text="#{language.german}">Deutsch</option>
+                        </select>
+                    </div>
+
+                    <!-- Тема інтерфейсу -->
+                    <div>
+                        <label for="theme"
+                               class="block text-sm font-medium text-gray-700 mb-2"
+                               th:text="#{cabinet.settings.theme}">
+                            Тема інтерфейсу
+                        </label>
+                        <select id="theme"
+                                name="theme"
+                                class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-yellow-400 focus:border-transparent transition">
+                            <option value="light"
+                                    th:selected="${user.settings?.theme == 'light' || user.settings?.theme == null}"
+                                    th:text="#{theme.light}">Світла</option>
+                            <option value="dark"
+                                    th:selected="${user.settings?.theme == 'dark'}"
+                                    th:text="#{theme.dark}">Темна</option>
+                            <option value="auto"
+                                    th:selected="${user.settings?.theme == 'auto'}"
+                                    th:text="#{theme.auto}">Автоматично</option>
+                        </select>
+                    </div>
+
+                    <!-- Email сповіщення -->
+                    <div class="space-y-3">
+                        <label class="block text-sm font-medium text-gray-700"
+                               th:text="#{cabinet.settings.notifications}">
+                            Email сповіщення
+                        </label>
+
+                        <label class="flex items-center">
+                            <input type="checkbox"
+                                   name="wantsNewsletter"
+                                   th:checked="${user.wantsNewsletter()}"
+                                   class="w-4 h-4 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400">
+                            <span class="ml-2 text-sm text-gray-700" th:text="#{cabinet.settings.email_notifications}">
+                                Отримувати новини та оновлення
+                            </span>
+                        </label>
+                    </div>
+
+                    <!-- Кнопка збереження -->
+                    <div class="pt-4">
+                        <button type="submit"
+                                class="w-full md:w-auto px-6 py-3 bg-yellow-400 hover:bg-yellow-500 text-black font-medium rounded-lg transition">
+                            <span th:text="#{cabinet.settings.save}">Зберегти налаштування</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Секція: Небезпечна зона -->
+            <div id="danger" class="bg-white rounded-lg shadow-md p-6 border-2 border-red-200 scroll-mt-4">
+                <h2 class="text-xl font-bold text-red-600 mb-6 flex items-center">
+                    <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                    </svg>
+                    <span th:text="#{cabinet.settings.danger_zone}">Небезпечна зона</span>
+                </h2>
+
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+                    <p class="text-sm text-red-800" th:text="#{cabinet.settings.delete_warning}">
+                        Видалення акаунту є незворотною дією. Всі ваші дані буде видалено назавжди.
+                    </p>
+                </div>
+
+                <button onclick="confirmDeleteAccount()"
+                        class="px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-medium rounded-lg transition">
+                    <span th:text="#{cabinet.settings.delete_account}">Видалити акаунт</span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+
+</div>
+
+<script layout:fragment="scripts" th:inline="javascript">
+    /*<![CDATA[*/
+
+    // Валідація форми зміни пароля
+    document.getElementById('passwordForm')?.addEventListener('submit', function(e) {
+        const newPassword = document.getElementById('newPassword').value;
+        const confirmPassword = document.getElementById('confirmPassword').value;
+
+        if (newPassword !== confirmPassword) {
+            e.preventDefault();
+            alert(/*[[#{cabinet.settings.password.mismatch}]]*/ 'Паролі не співпадають');
+            return false;
+        }
+
+        if (newPassword.length < 8) {
+            e.preventDefault();
+            alert(/*[[#{cabinet.settings.password.too_short}]]*/ 'Пароль повинен містити мінімум 8 символів');
+            return false;
+        }
+    });
+
+    // Smooth scroll для навігації
+    document.querySelectorAll('.settings-nav-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                // Оновити активний стан
+                document.querySelectorAll('.settings-nav-link').forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+            }
+        });
+    });
+
+    // Підтвердження видалення акаунту
+    function confirmDeleteAccount() {
+        const lang = /*[[${lang}]]*/ 'uk';
+        const contextPath = /*[[${#httpServletRequest.contextPath}]]*/ '';
+
+        const confirmMessage = /*[[#{cabinet.settings.delete_confirm}]]*/
+            'Ви впевнені що хочете видалити свій акаунт? Цю дію неможливо скасувати.\n\nВведіть "ВИДАЛИТИ" для підтвердження:';
+
+        const confirmation = prompt(confirmMessage);
+
+        if (confirmation === 'ВИДАЛИТИ' || confirmation === 'DELETE') {
+            fetch(`${contextPath}/${lang}/cabinet/settings/delete-account`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            })
+                .then(response => {
+                    if (response.ok) {
+                        alert(/*[[#{cabinet.settings.account_deleted}]]*/ 'Акаунт видалено');
+                        window.location.href = `${contextPath}/${lang}/`;
+                    } else {
+                        alert(/*[[#{cabinet.settings.delete_error}]]*/ 'Помилка видалення акаунту');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert(/*[[#{cabinet.settings.delete_error}]]*/ 'Помилка видалення акаунту');
+                });
+        }
+    }
+
+    /*]]>*/
+</script>
+
+<style layout:fragment="styles">
+    .settings-nav-link.active {
+        background-color: #FEF3C7;
+        color: #92400E;
+        font-weight: 500;
+    }
+
+    .scroll-mt-4 {
+        scroll-margin-top: 1rem;
+    }
+</style>
+
+</body>
+</html>

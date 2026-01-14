@@ -67,4 +67,57 @@ public class User {
     public boolean hasActiveSubscription() {
         return getActiveSubscription() != null;
     }
+
+    /**
+     * Отримати основний email
+     */
+    @Transient
+    public String getPrimaryEmail() {
+        if (emails == null || emails.isEmpty()) {
+            return null;
+        }
+        return emails.stream()
+                .filter(UserEmail::getIsPrimary)
+                .map(UserEmail::getEmail)
+                .findFirst()
+                .orElse(emails.iterator().next().getEmail()); // fallback на перший email
+    }
+
+    /**
+     * Перевірити чи користувач через OAuth2
+     */
+    @Transient
+    public boolean isOAuthUser() {
+        return socialAccounts != null && !socialAccounts.isEmpty();
+    }
+
+    /**
+     * Отримати провайдера OAuth2 (для відображення)
+     */
+    @Transient
+    public String getAuthProvider() {
+        if (socialAccounts == null || socialAccounts.isEmpty()) {
+            return "LOCAL";
+        }
+        return socialAccounts.iterator().next().getProvider(); // GOOGLE, FACEBOOK тощо
+    }
+
+    /**
+     * Отримати мову інтерфейсу
+     */
+    @Transient
+    public String getInterfaceLanguage() {
+        if (settings == null || settings.getInterfaceLanguage() == null) {
+            return "uk"; // за замовчуванням
+        }
+        return settings.getInterfaceLanguage();
+    }
+
+    /**
+     * Чи хоче користувач отримувати розсилку
+     */
+    @Transient
+    public boolean wantsNewsletter() {
+        return settings != null && Boolean.TRUE.equals(settings.getWantsNewsletter());
+    }
 }

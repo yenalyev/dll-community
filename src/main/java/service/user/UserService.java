@@ -15,6 +15,7 @@ import repository.UserRoleRepository;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
+import java.util.Set;
 
 @Slf4j
 @Service
@@ -169,6 +170,11 @@ public class UserService {
     public User findById(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("User not found: " + id));
+    }
+
+    @Transactional(readOnly = true)
+    public User findByIdWithDetails(Long id) {
+        return userRepository.findByIdWithAllData(id);
     }
 
     @Transactional(readOnly = true)

@@ -11,40 +11,70 @@
 <div layout:fragment="content" class="max-w-7xl mx-auto px-4 py-8">
 
   <!-- Поточна підписка -->
-  <div th:if="${activeSubscription}" class="bg-white rounded-lg shadow-md p-6 mb-8">
+  <div th:if="${activeSubscription != null}"
+       class="bg-white rounded-lg shadow-md p-6 mb-8">
     <div class="flex items-center justify-between mb-6">
       <h2 class="text-2xl font-bold" th:text="#{cabinet.subscription.current}">
         Поточна підписка
       </h2>
       <span class="bg-green-100 text-green-800 px-4 py-1 rounded-full text-sm font-medium">
-                <span th:text="#{cabinet.subscription.active}">Активна</span>
-            </span>
+        <span th:text="#{cabinet.subscription.active}">Активна</span>
+      </span>
     </div>
 
     <div class="grid md:grid-cols-2 gap-6">
+      <!-- Назва плану з захистом -->
       <div>
         <p class="text-gray-600 text-sm mb-1" th:text="#{cabinet.subscription.plan}">План</p>
         <p class="text-lg font-semibold"
-           th:text="${activeSubscription.subscriptionPlan.translations[0].name}">
+           th:text="${activeSubscription.subscriptionPlan != null
+                     && !#lists.isEmpty(activeSubscription.subscriptionPlan.translations)
+                     ? activeSubscription.subscriptionPlan.translations[0].name
+                     : 'N/A'}">
           Місячна підписка
         </p>
       </div>
+
+      <!-- Дата закінчення з захистом -->
       <div>
         <p class="text-gray-600 text-sm mb-1" th:text="#{cabinet.subscription.valid_until}">
           Діє до
         </p>
         <p class="text-lg font-semibold"
-           th:text="${#temporals.format(activeSubscription.endDate, 'dd MMMM yyyy')}">
+           th:text="${activeSubscription.endDate != null
+                     ? #temporals.format(activeSubscription.endDate, 'dd MMMM yyyy')
+                     : 'N/A'}">
           31 грудня 2025
         </p>
       </div>
     </div>
 
+    <!-- Кнопка скасування з захистом ID -->
     <div class="mt-6 pt-6 border-t">
-      <button onclick="cancelSubscription()"
+      <button th:if="${activeSubscription.id != null}"
+              th:onclick="'cancelSubscription(' + ${activeSubscription.id} + ')'"
               class="text-red-600 hover:text-red-800 font-medium">
         <span th:text="#{cabinet.subscription.cancel}">Скасувати підписку</span>
       </button>
+    </div>
+  </div>
+
+  <!-- Якщо немає активної підписки -->
+  <div th:if="${activeSubscription == null}"
+       class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+    <div class="flex items-center">
+      <svg class="w-6 h-6 text-blue-500 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+      </svg>
+      <div>
+        <h3 class="font-semibold text-blue-900" th:text="#{cabinet.subscription.no_active}">
+          У вас немає активної підписки
+        </h3>
+        <p class="text-blue-700 text-sm mt-1" th:text="#{cabinet.subscription.choose_plan}">
+          Оберіть підходящий тарифний план нижче
+        </p>
+      </div>
     </div>
   </div>
 
@@ -54,36 +84,65 @@
       Доступні тарифні плани
     </h2>
 
-    <div class="grid md:grid-cols-3 gap-6">
+    <!-- Якщо планів немає -->
+    <div th:if="${#lists.isEmpty(subscriptionPlans)}"
+         class="bg-gray-50 rounded-lg p-8 text-center">
+      <p class="text-gray-600" th:text="#{subscription.no_plans}">
+        Наразі немає доступних тарифних планів
+      </p>
+    </div>
+
+    <!-- Список планів -->
+    <div th:if="${!#lists.isEmpty(subscriptionPlans)}"
+         class="grid md:grid-cols-3 gap-6">
       <div th:each="plan : ${subscriptionPlans}"
+           th:if="${plan != null}"
            class="bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition">
 
-        <!-- Назва плану -->
+        <!-- Назва плану з захистом -->
         <h3 class="text-xl font-bold mb-2"
-            th:text="${plan.translations[0].name}">
+            th:text="${!#lists.isEmpty(plan.translations)
+                      ? plan.translations[0].name
+                      : 'Без назви'}">
           Місячна підписка
         </h3>
 
-        <!-- Опис -->
+        <!-- Опис з захистом -->
         <p class="text-gray-600 text-sm mb-4"
-           th:text="${plan.translations[0].description}">
+           th:text="${!#lists.isEmpty(plan.translations)
+                     && plan.translations[0].description != null
+                     ? plan.translations[0].description
+                     : ''}">
           Доступ до всіх матеріалів на 30 днів
         </p>
 
-        <!-- Ціна -->
+        <!-- Ціна з захистом -->
         <div class="mb-6">
-                    <span class="text-3xl font-bold"
-                          th:text="${plan.prices[0].amount / 100}">299</span>
-          <span class="text-xl text-gray-600"
-                th:text="${plan.prices[0].currency}">UAH</span>
+          <th:block th:if="${!#lists.isEmpty(plan.prices)}">
+            <span class="text-3xl font-bold"
+                  th:text="${plan.prices[0].amount != null ? plan.prices[0].amount / 100 : 0}">
+              299
+            </span>
+            <span class="text-xl text-gray-600"
+                  th:text="${plan.prices[0].currency != null ? plan.prices[0].currency : 'UAH'}">
+              UAH
+            </span>
+          </th:block>
+
+          <!-- Fallback якщо ціни немає -->
+          <th:block th:if="${#lists.isEmpty(plan.prices)}">
+            <span class="text-3xl font-bold text-gray-400">—</span>
+          </th:block>
+
           <p class="text-gray-500 text-sm mt-1">
-            <span th:text="${plan.durationInDays}">30</span>
+            <span th:text="${plan.durationInDays != null ? plan.durationInDays : 0}">30</span>
             <span th:text="#{subscription.days}">днів</span>
           </p>
         </div>
 
         <!-- Кнопка покупки -->
-        <form th:action="@{/{lang}/subscription/purchase/{id}(lang=${lang}, id=${plan.id})}"
+        <form th:if="${plan.id != null}"
+              th:action="@{/{lang}/subscription/purchase/{id}(lang=${lang}, id=${plan.id})}"
               method="post">
           <button type="submit"
                   class="w-full bg-yellow-400 hover:bg-yellow-500 text-black font-medium py-3 rounded-lg transition">
@@ -96,23 +155,56 @@
 
 </div>
 
-<script layout:fragment="scripts">
-  function cancelSubscription() {
-    if (confirm('Ви впевнені що хочете скасувати підписку?')) {
-      fetch('[[${#httpServletRequest.contextPath}]]/[[${lang}]]/cabinet/subscription/[[${activeSubscription.id}]]/cancel', {
-        method: 'POST'
+<script layout:fragment="scripts" th:inline="javascript">
+  /*<![CDATA[*/
+
+  function cancelSubscription(subscriptionId) {
+    // Валідація ID
+    if (!subscriptionId || subscriptionId <= 0) {
+      console.error('Invalid subscription ID');
+      return;
+    }
+
+    const confirmMessage = /*[[#{cabinet.subscription.cancel.confirm}]]*/ 'Ви впевнені що хочете скасувати підписку?';
+
+    if (confirm(confirmMessage)) {
+      const lang = /*[[${lang}]]*/ 'uk';
+      const contextPath = /*[[${#httpServletRequest.contextPath}]]*/ '';
+      const url = `${contextPath}/${lang}/cabinet/subscription/${subscriptionId}/cancel`;
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
       })
-              .then(response => response.json())
+              .then(response => {
+                if (!response.ok) {
+                  throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.json();
+              })
               .then(data => {
-                if (data.success) {
-                  alert('Підписку скасовано');
+                if (data && data.success) {
+                  const successMessage = /*[[#{cabinet.subscription.cancelled}]]*/ 'Підписку скасовано';
+                  alert(successMessage);
                   location.reload();
                 } else {
-                  alert('Помилка: ' + data.message);
+                  const errorMessage = data && data.message
+                          ? data.message
+                          : /*[[#{cabinet.subscription.cancel.error}]]*/ 'Помилка скасування підписки';
+                  alert('Помилка: ' + errorMessage);
                 }
+              })
+              .catch(error => {
+                console.error('Error:', error);
+                const errorMessage = /*[[#{cabinet.subscription.cancel.error}]]*/ 'Помилка скасування підписки';
+                alert(errorMessage);
               });
     }
   }
+
+  /*]]>*/
 </script>
 </body>
 </html>

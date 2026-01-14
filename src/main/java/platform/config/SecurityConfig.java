@@ -9,8 +9,14 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
 import platform.config.security.CustomUserDetailsService;
 import platform.config.security.OAuth2SuccessHandler;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
@@ -30,34 +36,47 @@ public class SecurityConfig {
                                 // Статичні ресурси
                                 "/css/**", "/js/**", "/images/**", "/webjars/**",
                                 // Шлюзи для входу/реєстрації (без мовного коду)
-                                "/login", "/register",
+                                "/login", "/register", "/logout",
                                 // Кореневий URL для редіректу
                                 "/",
                                 // Публічні сторінки з будь-яким мовним кодом
                                 "/*/home", "/*/index", "/*/",
                                 "/*/login", "/*/register",
-                                "/uploads/**"
+                                "/uploads/**",
+                                // API для OAuth2
+                                "/oauth2/**", "/login/oauth2/**"
                         ).permitAll()
-                        // --- 2. Адмін-панель (тільки для ADMIN, БЕЗ мовного префікса) ---
+
+                        // --- 2. Адмін-панель (тільки для ADMIN) ---
                         .antMatchers("/admin/**").hasRole("ADMIN")
-                        // --- 3. Всі інші запити вимагають автентифікації ---
-                        //.anyRequest().authenticated()
+
+                        // --- 3. КАБІНЕТ КОРИСТУВАЧА - ВИМАГАЄ АВТЕНТИФІКАЦІЇ ---
+                        .antMatchers("/*/cabinet/**").authenticated()
+
+                        // --- 4. Інші захищені маршрути ---
+                        .antMatchers("/*/lessons/**", "/*/profile/**").authenticated()
+
+                        // --- 5. Всі інші запити - публічні (або authenticated якщо треба) ---
+                        .anyRequest().permitAll()
                 )
+
                 // --- 4. Налаштування форми входу ---
                 .formLogin(formLogin -> formLogin
                         .loginPage("/login")
-                        .loginProcessingUrl("/{lang}/login")
+                        .loginProcessingUrl("/login") // БЕЗ {lang}!
                         .defaultSuccessUrl("/", true)
                         .failureUrl("/login?error=true")
                         .usernameParameter("username")
                         .passwordParameter("password")
                 )
+
                 // --- 5. Налаштування OAuth2 ---
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
                         .successHandler(oAuth2SuccessHandler)
                         .failureUrl("/login?error=oauth")
                 )
+
                 // --- 6. Налаштування виходу ---
                 .logout(logout -> logout
                         .logoutUrl("/logout")
@@ -66,20 +85,44 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID", "remember-me")
                         .permitAll()
                 )
-                // ✅ ДОДАЄМО REMEMBER ME
+
+                // --- 7. Remember Me ---
                 .rememberMe(rememberMe -> rememberMe
-                        .key("uniqueAndSecretKey123456")  // Змініть на свій секретний ключ!
-                        .tokenValiditySeconds(30 * 24 * 60 * 60) // 30 днів (в секундах)
-                        .rememberMeParameter("remember-me") // Ім'я параметра з форми
-                        .rememberMeCookieName("remember-me") // Ім'я cookie
-                        .userDetailsService(customUserDetailsService) // Потрібно додати
+                        .key("uniqueAndSecretKey123456")
+                        .tokenValiditySeconds(30 * 24 * 60 * 60) // 30 днів
+                        .rememberMeParameter("remember-me")
+                        .rememberMeCookieName("remember-me")
+                        .userDetailsService(customUserDetailsService)
                 )
-                // --- 7. Налаштування обробки помилок доступу ---
+
+                // --- 8. Обробка помилок доступу ---
                 .exceptionHandling(exception -> exception
-                        .accessDeniedPage("/access-denied") // Сторінка при відмові в доступі
+                        .authenticationEntryPoint((request, response, authException) -> {
+                            // Витягуємо мову з URL
+                            String lang = extractLangFromUrl(request);
+                            response.sendRedirect("/" + lang + "/login?redirect=" +
+                                    request.getRequestURI());
+                        })
+                        .accessDeniedHandler((request, response, accessDeniedException) -> {
+                            String lang = extractLangFromUrl(request);
+                            response.sendRedirect("/" + lang + "/access-denied");
+                        })
                 );
 
         return http.build();
+    }
+
+    /**
+     * Витягує мовний код з URL
+     */
+    private String extractLangFromUrl(HttpServletRequest request) {
+        String uri = request.getRequestURI();
+        // Витягуємо перший сегмент після /
+        String[] segments = uri.split("/");
+        if (segments.length > 1 && segments[1].matches("[a-z]{2}")) {
+            return segments[1]; // uk, en, de тощо
+        }
+        return "uk"; // За замовчуванням українська
     }
 
     @Bean

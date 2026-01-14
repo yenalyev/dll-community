@@ -159,9 +159,10 @@ public class UserCabinetController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
-        User user = userService.findById(userDetails.getId());
+        User user = userService.findByIdWithDetails(userDetails.getId());
 
         model.addAttribute("user", user);
+        model.addAttribute("lang", lang);
 
         return "cabinet/settings";
     }
