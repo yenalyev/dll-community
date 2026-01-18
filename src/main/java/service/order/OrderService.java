@@ -1,6 +1,5 @@
 package service.order;
 
-
 import entity.enums.*;
 import entity.order.*;
 import entity.user.User;
@@ -22,7 +21,6 @@ public class OrderService {
 
     private final OrderRepository orderRepository;
     private final SubscriptionService subscriptionService;
-
     private final SubscriptionPlanRepository subscriptionPlanRepository;
 
     /**
@@ -32,7 +30,6 @@ public class OrderService {
     public Order createSubscriptionOrder(User user, Long planId, Currency currency) {
         log.info("Creating subscription order for user {} with plan {}", user.getId(), planId);
 
-        // Завантажуємо план з цінами
         SubscriptionPlan plan = subscriptionPlanRepository.findByIdWithPrices(planId)
                 .orElseThrow(() -> new IllegalArgumentException("Subscription plan not found: " + planId));
 
@@ -48,7 +45,6 @@ public class OrderService {
         order.setTotalAmount(amount);
         order.setCurrency(currency);
 
-        // Створити OrderItem
         OrderItem item = new OrderItem();
         item.setOrder(order);
         item.setSubscriptionPlan(plan);
@@ -72,7 +68,6 @@ public class OrderService {
         order.setPaymentGateway(paymentGateway);
         order.setCompletedAt(LocalDateTime.now());
 
-        // Якщо це замовлення на підписку - створити підписку
         if (order.getOrderType() == OrderType.SUBSCRIPTION_PURCHASE) {
             OrderItem item = order.getItems().stream()
                     .filter(i -> i.getSubscriptionPlan() != null)
@@ -105,15 +100,35 @@ public class OrderService {
     /**
      * Отримати історію замовлень користувача
      */
+    @Transactional(readOnly = true)
     public List<Order> getUserOrders(Long userId) {
         return orderRepository.findByUserId(userId);
     }
 
     /**
-     * Отримати замовлення по ID
+     * Отримати замовлення по ID з підпискою
      */
+    @Transactional(readOnly = true)
     public Order getOrder(Long orderId) {
-        return orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+        return orderRepository.findByIdWithSubscription(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+    }
+
+    /**
+     * Повне завантаження замовлення з усіма деталями без MultipleBagFetchException
+     */
+    @Transactional(readOnly = true)
+    public Order getOrderWithDetails(Long orderId) {
+        // Крок 1: Завантажуємо Order та колекцію Items
+        Order order = orderRepository.findByIdWithItems(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found: " + orderId));
+
+        // Крок 2: Довантажуємо колекцію Subscriptions у той самий об'єкт
+        orderRepository.findByIdWithSubscription(orderId);
+
+        // Крок 3: Довантажуємо деталі для планів та переклади (Hibernate автоматично зв'яже їх)
+        orderRepository.fetchOrderItemDetails(orderId);
+
+        return order;
     }
 }

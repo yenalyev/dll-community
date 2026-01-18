@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/main}">
+
+<head>
+    <title th:text="#{cabinet.order.details}">Деталі замовлення</title>
+</head>
+
+<body>
+<div layout:fragment="content" class="max-w-7xl mx-auto px-4 py-8">
+
+    <!-- Заголовок -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900">
+            Замовлення #<span th:text="${order.id}">123</span>
+        </h1>
+        <p class="text-gray-600 mt-2" th:if="${order.createdAt != null}">
+            Створено: <span th:text="${#temporals.format(order.createdAt, 'dd MMMM yyyy, HH:mm')}">01.01.2024 12:00</span>
+        </p>
+    </div>
+
+    <!-- Статус замовлення -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4">Статус замовлення</h2>
+        <span th:if="${order.status != null}"
+              th:class="${order.status.toString() == 'COMPLETED'
+                        ? 'bg-green-100 text-green-800'
+                        : (order.status.toString() == 'PENDING'
+                           ? 'bg-yellow-100 text-yellow-800'
+                           : 'bg-red-100 text-red-800')}"
+              class="px-4 py-1 rounded-full text-sm font-medium">
+            <th:block th:switch="${order.status.toString()}">
+                <span th:case="'COMPLETED'">Виконано</span>
+                <span th:case="'PENDING'">В очікуванні</span>
+                <span th:case="'CANCELLED'">Скасовано</span>
+                <span th:case="'FAILED'">Помилка</span>
+                <span th:case="*" th:text="${order.status}">-</span>
+            </th:block>
+        </span>
+    </div>
+
+    <!-- Деталі оплати -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+        <h2 class="text-xl font-bold mb-4">Деталі оплати</h2>
+        <div class="space-y-3">
+            <!-- Сума -->
+            <div class="flex justify-between">
+                <span class="text-gray-600">Сума:</span>
+                <span class="font-semibold">
+                    <span th:text="${order.totalAmount != null ? order.totalAmount / 100.0 : 0}">499.00</span>
+                    <span th:text="${order.currency != null ? order.currency : 'UAH'}">UAH</span>
+                </span>
+            </div>
+
+            <!-- Платіжна система -->
+            <div class="flex justify-between" th:if="${order.paymentGateway != null}">
+                <span class="text-gray-600">Платіжна система:</span>
+                <span th:text="${order.paymentGateway}">WayForPay</span>
+            </div>
+
+            <!-- Дата оплати -->
+            <div class="flex justify-between" th:if="${order.completedAt != null}">
+                <span class="text-gray-600">Оплачено:</span>
+                <span th:text="${#temporals.format(order.completedAt, 'dd MMMM yyyy, HH:mm')}">01.01.2024 12:00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Товари в замовленні -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6"
+         th:if="${order.items != null && !#lists.isEmpty(order.items)}">
+        <h2 class="text-xl font-bold mb-4">Товари</h2>
+
+        <div th:each="item, iterStat : ${order.items}"
+             th:class="${!iterStat.last ? 'py-3 border-b' : 'py-3'}">
+            <div class="flex justify-between items-start">
+                <div class="flex-1">
+                    <!-- Назва товару -->
+                    <p class="font-medium text-gray-900">
+                        <!-- Підписка -->
+                        <th:block th:if="${item.subscriptionPlan != null}">
+                            <span th:if="${item.subscriptionPlan.translations != null
+                                         && !#lists.isEmpty(item.subscriptionPlan.translations)}"
+                                  th:text="${item.subscriptionPlan.translations[0].name}">
+                                Місячна підписка
+                            </span>
+                            <span th:if="${item.subscriptionPlan.translations == null
+                                         || #lists.isEmpty(item.subscriptionPlan.translations)}">
+                                Підписка DLL Community
+                            </span>
+                        </th:block>
+
+                        <!-- Урок -->
+                        <th:block th:if="${item.lesson != null && item.subscriptionPlan == null}">
+                            <span th:text="${item.lesson.title}">Урок</span>
+                        </th:block>
+                    </p>
+
+                    <!-- Ціна товару -->
+                    <p class="text-sm text-gray-600 mt-1">
+                        <span th:text="${item.amount != null ? item.amount / 100.0 : 0}">499.00</span>
+                        <span th:text="${item.currency != null ? item.currency : 'UAH'}">UAH</span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Підписка (якщо є) -->
+    <div class="bg-white rounded-lg shadow-md p-6 mb-6"
+         th:if="${order.subscriptions != null && !#lists.isEmpty(order.subscriptions)}">
+        <h2 class="text-xl font-bold mb-4">Підписка</h2>
+
+        <th:block th:with="subscription=${order.subscriptions[0]}">
+            <div class="space-y-3">
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Дата початку:</span>
+                    <span th:if="${subscription.startDate != null}"
+                          th:text="${#temporals.format(subscription.startDate, 'dd MMMM yyyy')}">
+                        01.01.2024
+                    </span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Дата закінчення:</span>
+                    <span th:if="${subscription.endDate != null}"
+                          th:text="${#temporals.format(subscription.endDate, 'dd MMMM yyyy')}">
+                        31.01.2024
+                    </span>
+                </div>
+
+                <div class="flex justify-between">
+                    <span class="text-gray-600">Статус:</span>
+                    <span th:if="${subscription.status != null}"
+                          th:class="${subscription.status.toString() == 'ACTIVE'
+                                    ? 'text-green-600 font-medium'
+                                    : 'text-gray-600'}"
+                          th:text="${subscription.status}">
+                        ACTIVE
+                    </span>
+                </div>
+            </div>
+        </th:block>
+    </div>
+
+    <!-- Кнопка назад -->
+    <div class="mt-8">
+        <a th:href="@{/{lang}/cabinet/orders(lang=${lang})}"
+           class="inline-flex items-center px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition">
+            ← Назад до замовлень
+        </a>
+    </div>
+
+</div>
+</body>
+</html>

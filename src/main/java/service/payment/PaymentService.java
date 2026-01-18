@@ -31,6 +31,10 @@ public class PaymentService {
     public PaymentResponse createPayment(Order order, String lang) {
         PaymentProvider provider = getProvider(defaultProvider);
 
+        // Правильні URLs з підстановкою мови
+        String returnUrl = baseUrl + "/" + lang + "/subscription/success/" + order.getId();
+        String callbackUrl = baseUrl + "/api/payment/callback/" + defaultProvider;
+
         PaymentRequest request = PaymentRequest.builder()
                 .orderId(order.getId())
                 .amount(order.getTotalAmount())
@@ -38,10 +42,12 @@ public class PaymentService {
                 .customerEmail(getUserEmail(order.getUser()))
                 .customerName(order.getUser().getName())
                 .description(getOrderDescription(order, lang))
-                .returnUrl(baseUrl + "/" + lang + "/templates/subscription/success/" + order.getId())
-                .callbackUrl(baseUrl + "/api/payment/callback/" + defaultProvider)
+                .returnUrl(returnUrl)
+                .callbackUrl(callbackUrl)
                 .language(lang)
                 .build();
+
+        log.debug("Creating payment with returnUrl: {}, callbackUrl: {}", returnUrl, callbackUrl);
 
         return provider.createPayment(request);
     }

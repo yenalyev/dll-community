@@ -140,14 +140,15 @@ public class UserCabinetController {
             @AuthenticationPrincipal CustomUserDetails userDetails,
             Model model
     ) {
-        Order order = orderService.getOrder(orderId);
+        Order order = orderService.getOrderWithDetails(orderId);
 
         // Перевірити що замовлення належить користувачу
-        if (!order.getUser().getId().equals(userDetails.getId())) {
-            return "redirect:/{lang}/cabinet/orders";
+        if (order.getUser() == null || !order.getUser().getId().equals(userDetails.getId())) {
+            return "redirect:/" + lang + "/cabinet/orders";
         }
 
         model.addAttribute("order", order);
+        model.addAttribute("lang", lang);
 
         return "cabinet/order-details";
     }

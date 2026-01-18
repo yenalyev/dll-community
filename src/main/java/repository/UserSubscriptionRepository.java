@@ -15,12 +15,14 @@ import java.util.Optional;
 public interface UserSubscriptionRepository extends JpaRepository<UserSubscription, Long> {
 
     /**
-     * Знайти активну підписку користувача
+     * Знайти активну підписку користувача з завантаженням плану та перекладів
      *
      * @param userId ID користувача
      * @return Optional з підпискою якщо є
      */
     @Query("SELECT us FROM UserSubscription us " +
+            "LEFT JOIN FETCH us.subscriptionPlan sp " +
+            "LEFT JOIN FETCH sp.translations " +
             "WHERE us.user.id = :userId " +
             "AND us.status = 'ACTIVE' " +
             "AND us.endDate > :now " +

@@ -30,6 +30,15 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+                // ⬇️ CSRF для Java 8
+                .csrf()
+                .ignoringAntMatchers(
+                        "/api/payment/**",              // Всі payment API endpoints
+                        "/*/subscription/success/**",    // Return URL від WayForPay
+                        "/*/subscription/failed/**"      // Failed URL
+                )
+                .and()
+
                 .authorizeHttpRequests(authorize -> authorize
                         // --- 1. Публічні сторінки ---
                         .antMatchers(
@@ -44,7 +53,12 @@ public class SecurityConfig {
                                 "/*/login", "/*/register",
                                 "/uploads/**",
                                 // API для OAuth2
-                                "/oauth2/**", "/login/oauth2/**"
+                                "/oauth2/**", "/login/oauth2/**",
+                                // ⬇️ ВИПРАВЛЕНО: Success/Failed сторінки для оплати
+                                "/*/subscription/success/**",
+                                "/*/subscription/failed/**",
+                                // API Payment callback (webhook від WayForPay)
+                                "/api/payment/callback/**"
                         ).permitAll()
 
                         // --- 2. Адмін-панель (тільки для ADMIN) ---
@@ -60,7 +74,6 @@ public class SecurityConfig {
                         .anyRequest().permitAll()
                 )
 
-                // --- 4. Налаштування форми входу ---
                 // --- 4. Налаштування форми входу ---
                 .formLogin(formLogin -> formLogin
                         .loginPage("/login")

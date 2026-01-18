@@ -1,5 +1,6 @@
 package controller;
 
+import dto.payment.PaymentResponse;
 import entity.enums.Currency;
 import entity.order.Order;
 import entity.order.SubscriptionPlan;
@@ -18,6 +19,7 @@ import service.subscription.SubscriptionService;
 import service.user.UserService;
 
 import java.util.List;
+import java.util.Map;
 
 @Controller
 @RequestMapping("/{lang}/subscription")
@@ -66,19 +68,30 @@ public class SubscriptionController {
             Model model
     ) {
         try {
-            // Перевірити авторизацію
             if (userDetails == null) {
                 return "redirect:/{lang}/login?redirect=subscription";
             }
 
-            User user = userService.findById(userDetails.getId());
-            //SubscriptionPlan plan = subscriptionService.getPlanById(planId);
-
-            // Створити замовлення
+            User user = userService.findByIdWithDetails(userDetails.getId());
             Order order = orderService.createSubscriptionOrder(user, planId, currency);
 
-            // Перенаправити на сторінку оплати
-            return "redirect:/{lang}/payment/subscription/" + order.getId();
+            log.info("Order {} created, generating payment form", order.getId());
+
+            PaymentResponse paymentResponse = paymentService.createPayment(order, lang);
+
+            if (!paymentResponse.isSuccess()) {
+                log.error("Failed to create payment: {}", paymentResponse.getError());
+                model.addAttribute("error", true);
+                return "redirect:/{lang}/subscription";
+            }
+
+            // ⬇️ ПЕРЕДАТИ ДАНІ В MODEL
+            model.addAttribute("paymentUrl", paymentResponse.getPaymentUrl());
+            model.addAttribute("formData", paymentResponse.getFormData());
+
+            log.info("Rendering payment form for order {}", order.getId());
+
+            return "payment/redirect";
 
         } catch (Exception e) {
             log.error("Error creating subscription order", e);
@@ -88,15 +101,47 @@ public class SubscriptionController {
     }
 
     /**
-     * Callback після успішної оплати
+     * Callback після успішної оплати (GET і POST)
      */
-    @GetMapping("/success/{orderId}")
+    @RequestMapping(
+            value = "/success/{orderId}",
+            method = {RequestMethod.GET, RequestMethod.POST}
+    )
     public String paymentSuccess(
             @PathVariable String lang,
             @PathVariable Long orderId,
+            @RequestParam(required = false) Map<String, String> params,
             Model model
     ) {
+        log.info("=== Payment return for order {} ===", orderId);
+        log.info("Params from WayForPay: {}", params);
+
         Order order = orderService.getOrder(orderId);
+
+        // Обробка параметрів від WayForPay
+        if (params != null && !params.isEmpty() && params.containsKey("transactionStatus")) {
+            String status = params.get("transactionStatus");
+            String reasonCode = params.get("reasonCode");
+
+            log.info("Payment status: {}, reasonCode: {}", status, reasonCode);
+
+            if ("Approved".equals(status) && "1100".equals(reasonCode)) {
+                log.info("✅ Payment approved for order {}", orderId);
+
+                try {
+                    String authCode = params.getOrDefault("authCode", "");
+                    orderService.completeOrder(orderId, "wayforpay", authCode);
+                    log.info("Order {} completed successfully", orderId);
+
+                    // Перечитуємо оновлене замовлення
+                    order = orderService.getOrder(orderId);
+                } catch (Exception e) {
+                    log.error("Error completing order {}", orderId, e);
+                }
+            } else {
+                log.warn("❌ Payment not approved: status={}, reason={}", status, reasonCode);
+            }
+        }
 
         model.addAttribute("order", order);
         model.addAttribute("subscription", order.getSubscription());
