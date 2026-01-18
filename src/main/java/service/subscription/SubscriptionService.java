@@ -2,8 +2,6 @@
 
 package service.subscription;
 
-import entity.enums.OrderStatus;
-import entity.enums.OrderType;
 import entity.enums.SubscriptionStatus;
 import entity.order.*;
 import entity.user.User;
@@ -19,6 +17,7 @@ import repository.UserSubscriptionRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -34,14 +33,14 @@ public class SubscriptionService {
      * Отримати активну підписку користувача
      */
     public UserSubscription getActiveSubscription(Long userId) {
-        return subscriptionRepository.findActiveByUserId(userId).orElse(null);
+        return subscriptionRepository.findActiveByUserId(userId, LocalDateTime.now()).orElse(null);
     }
 
     /**
      * Перевірити чи має користувач активну підписку
      */
     public boolean hasActiveSubscription(Long userId) {
-        return subscriptionRepository.existsActiveByUserId(userId);
+        return subscriptionRepository.hasActiveSubscription(userId, LocalDateTime.now());
     }
 
     /**
@@ -115,29 +114,57 @@ public class SubscriptionService {
      */
     @Transactional
     public void deactivateExpiredSubscriptions() {
-        List<UserSubscription> expiredSubs = subscriptionRepository.findExpiredSubscriptions(LocalDateTime.now());
+        LocalDateTime now = LocalDateTime.now();
+        int gracePeriodDays = 5; // можна винести в application.properties
+        LocalDateTime gracePeriodEnd = now.minusDays(gracePeriodDays);
+
+        List<UserSubscription> expiredSubs =
+                subscriptionRepository.findExpiredSubscriptions(now, gracePeriodEnd);
+
+        if (expiredSubs.isEmpty()) {
+            log.info("No expired subscriptions found");
+            return;
+        }
 
         for (UserSubscription sub : expiredSubs) {
+            String reason = sub.getAutoRenew()
+                    ? "failed renewal after grace period"
+                    : "expired without auto-renewal";
+
             sub.setStatus(SubscriptionStatus.EXPIRED);
-            log.info("Deactivated expired subscription {} for user {}",
-                    sub.getId(), sub.getUser().getId());
+            sub.setUpdatedAt(now);
+
+            log.info("Deactivated subscription {} for user {} ({})",
+                    sub.getId(), sub.getUser().getId(), reason);
+
+            // Опціонально: відправити email про деактивацію
+            // emailService.sendSubscriptionExpiredEmail(sub);
         }
 
         subscriptionRepository.saveAll(expiredSubs);
+        log.info("Deactivated {} expired subscriptions", expiredSubs.size());
     }
 
     /**
      * Отримати всі підписки користувача (історію)
      */
-    public List<UserSubscription> getUserSubscriptionHistory(Long userId) {
-        return subscriptionRepository.findByUserIdOrderByCreatedAtDesc(userId);
+    public Optional<List<UserSubscription>> getUserSubscriptionHistory(Long userId) {
+        return subscriptionRepository.findByUserId(userId);
     }
 
     /**
      * Отримати всі доступні плани підписок
      */
+    @Transactional(readOnly = true)
     public List<SubscriptionPlan> getActivePlans() {
-        return planRepository.findByIsActiveTrue();
+        List<SubscriptionPlan> plans = planRepository.findByIsActiveTrue();
+
+        if (!plans.isEmpty()) {
+            // Дозавантажуємо translations
+            planRepository.loadTranslations(plans);
+        }
+
+        return plans;
     }
 
     /**

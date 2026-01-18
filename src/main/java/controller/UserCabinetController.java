@@ -15,6 +15,7 @@ import service.order.OrderService;
 import service.subscription.SubscriptionService;
 import service.user.UserService;
 
+import java.util.ArrayList;
 import java.util.List;
 
 @Controller
@@ -77,7 +78,8 @@ public class UserCabinetController {
             Model model
     ) {
         User user = userService.findById(userDetails.getId());
-        List<UserSubscription> history = subscriptionService.getUserSubscriptionHistory(user.getId());
+        List<UserSubscription> history = subscriptionService.getUserSubscriptionHistory(user.getId())
+                .orElse(new ArrayList<>());
 
         model.addAttribute("user", user);
         model.addAttribute("subscriptionHistory", history);

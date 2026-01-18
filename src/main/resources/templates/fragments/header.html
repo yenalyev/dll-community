@@ -20,7 +20,7 @@
 
             <!-- Навігація для комп'ютерів -->
             <nav class="hidden lg:flex items-center space-x-8">
-                <a href="#subscriptions" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.subscriptions}">Підписки</a>
+                <a th:href="@{/{lang}/subscription(lang=${currentLangCode})}" class="text-gray-900 font-semibold hover:text-gray-700 transition" th:text="#{nav.subscriptions}">Підписки</a>
                 <div x-data="{ open: false }" @mouseenter="open = true" @mouseleave="open = false" class="relative">
                     <button class="text-gray-900 font-semibold hover:text-gray-700 transition flex items-center">
                         <span th:text="#{nav.lessons}">Уроки</span>
@@ -195,7 +195,7 @@
         <!-- ========================================== -->
         <div x-show="mobileMenuOpen" x-transition class="lg:hidden pb-4">
             <div class="flex flex-col space-y-2 mt-2">
-                <a href="#subscriptions" class="text-gray-900 font-semibold py-2" th:text="#{nav.subscriptions}">Підписки</a>
+                <a th:href="@{/{lang}/subscription(lang=${currentLangCode})}" class="text-gray-900 font-semibold py-2" th:text="#{nav.subscriptions}">Підписки</a>
                 <a th:href="@{/{lang}/lessons(lang=${currentLangCode})}" class="text-gray-900 font-semibold py-2" th:text="#{nav.lessons}">Уроки</a>
                 <a href="#activities" class="text-gray-900 font-semibold py-2" th:text="#{nav.activities}">Активності</a>
                 <hr class="border-gray-400 my-2">
@@ -267,19 +267,16 @@
 
                     <hr class="border-gray-400 my-2">
 
-                    <!-- Вихід мобільний -->
-                    <a href="#"
-                       @click.prevent="document.getElementById('logoutFormMobile').submit()"
-                       class="flex items-center text-red-600 font-semibold py-2 w-full hover:text-red-800">
-                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-                        </svg>
-                        <span th:text="#{nav.logout}">Вихід</span>
-                    </a>
-
-                    <!-- Прихована форма logout для мобільного -->
-                    <form id="logoutFormMobile" method="post" th:action="@{/logout}" style="display: none;">
+                    <!-- Вихід -->
+                    <form method="post" th:action="@{/logout}">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                        <button type="submit"
+                                class="flex items-center text-red-600 font-semibold py-2 w-full hover:text-red-800">
+                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+                            </svg>
+                            <span th:text="#{nav.logout}">Вихід</span>
+                        </button>
                     </form>
                 </div>
 

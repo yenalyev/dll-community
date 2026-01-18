@@ -1,64 +1,77 @@
 package repository;
 
-import entity.enums.OrderStatus;
-import entity.enums.OrderType;
 import entity.order.Order;
+import entity.lesson.Lesson;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.time.LocalDateTime;
 import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, Long> {
 
     /**
-     * Знайти замовлення користувача
+     * Перевірити чи користувач придбав конкретний урок
+     *
+     * @param userId ID користувача
+     * @param lessonId ID уроку
+     * @return true якщо є завершене замовлення з цим уроком
      */
-    List<Order> findByUserIdOrderByCreatedAtDesc(Long userId);
-
-    /**
-     * Знайти замовлення по статусу
-     */
-    List<Order> findByStatus(OrderStatus status);
-
-    /**
-     * Знайти замовлення по типу
-     */
-    List<Order> findByOrderType(OrderType orderType);
-
-    /**
-     * Знайти замовлення користувача по статусу
-     */
-    List<Order> findByUserIdAndStatus(Long userId, OrderStatus status);
-
-    /**
-     * Знайти замовлення що очікують оплати довше ніж N хвилин
-     */
-    @Query("SELECT o FROM Order o WHERE o.status = 'PENDING' " +
-            "AND o.createdAt < :deadline")
-    List<Order> findPendingOrdersOlderThan(@Param("deadline") LocalDateTime deadline);
-
-    /**
-     * Статистика замовлень за період
-     */
-    @Query("SELECT COUNT(o), SUM(o.totalAmount) FROM Order o " +
-            "WHERE o.status = 'COMPLETED' " +
-            "AND o.createdAt BETWEEN :startDate AND :endDate")
-    Object[] getOrderStatistics(
-            @Param("startDate") LocalDateTime startDate,
-            @Param("endDate") LocalDateTime endDate
+    @Query("SELECT CASE WHEN COUNT(o) > 0 THEN true ELSE false END " +
+            "FROM Order o " +
+            "JOIN o.items oi " +
+            "WHERE o.user.id = :userId " +
+            "AND oi.lesson.id = :lessonId " +
+            "AND o.status = 'COMPLETED' " +
+            "AND o.orderType = 'SINGLE_PURCHASE'")
+    boolean existsCompletedOrderForLesson(
+            @Param("userId") Long userId,
+            @Param("lessonId") Long lessonId
     );
 
     /**
-     * Знайти останнє замовлення користувача
+     * Отримати всі придбані уроки користувача
+     * Корисно для сторінки "Мої уроки"
+     *
+     * @param userId ID користувача
+     * @return список придбаних уроків
      */
-    Order findFirstByUserIdOrderByCreatedAtDesc(Long userId);
+    @Query("SELECT DISTINCT oi.lesson " +
+            "FROM Order o " +
+            "JOIN o.items oi " +
+            "WHERE o.user.id = :userId " +
+            "AND oi.lesson IS NOT NULL " +
+            "AND o.status = 'COMPLETED' " +
+            "AND o.orderType = 'SINGLE_PURCHASE' " +
+            "ORDER BY o.createdAt DESC")
+    List<Lesson> findPurchasedLessonsByUserId(@Param("userId") Long userId);
 
     /**
-     * Підрахувати кількість завершених замовлень користувача
+     * Знайти всі замовлення користувача
+     *
+     * @param userId ID користувача
+     * @return список замовлень
      */
-    long countByUserIdAndStatus(Long userId, OrderStatus status);
+    @Query("SELECT o FROM Order o " +
+            "WHERE o.user.id = :userId " +
+            "ORDER BY o.createdAt DESC")
+    List<Order> findByUserId(@Param("userId") Long userId);
+
+    /**
+     * Знайти замовлення користувача по статусу
+     *
+     * @param userId ID користувача
+     * @param status статус замовлення
+     * @return список замовлень
+     */
+    @Query("SELECT o FROM Order o " +
+            "WHERE o.user.id = :userId " +
+            "AND o.status = :status " +
+            "ORDER BY o.createdAt DESC")
+    List<Order> findByUserIdAndStatus(
+            @Param("userId") Long userId,
+            @Param("status") entity.enums.OrderStatus status
+    );
 }

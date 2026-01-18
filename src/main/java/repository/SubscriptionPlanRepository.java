@@ -12,8 +12,22 @@ import java.util.Optional;
 
 public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPlan, Long> {
 
-    @EntityGraph(attributePaths = {"translations", "prices"})
+    /**
+     * Знайти активні плани підписки з завантаженням translations і prices
+     */
+    @Query("SELECT DISTINCT sp FROM SubscriptionPlan sp " +
+            "LEFT JOIN FETCH sp.prices " +
+            "WHERE sp.isActive = true " +
+            "ORDER BY sp.sortOrder")
     List<SubscriptionPlan> findByIsActiveTrue();
+
+    /**
+     * Дозавантажити translations для планів
+     */
+    @Query("SELECT DISTINCT sp FROM SubscriptionPlan sp " +
+            "LEFT JOIN FETCH sp.translations " +
+            "WHERE sp IN :plans")
+    List<SubscriptionPlan> loadTranslations(@Param("plans") List<SubscriptionPlan> plans);
 
     // Отримати план з перекладами
     @Query("SELECT DISTINCT p FROM SubscriptionPlan p " +
@@ -30,5 +44,6 @@ public interface SubscriptionPlanRepository extends JpaRepository<SubscriptionPl
     // Отримати всі плани (без eager loading колекцій)
     @Query("SELECT p FROM SubscriptionPlan p ORDER BY p.durationInDays")
     List<SubscriptionPlan> findAllOrdered();
+
 
 }

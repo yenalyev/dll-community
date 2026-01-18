@@ -72,10 +72,10 @@ public class SubscriptionController {
             }
 
             User user = userService.findById(userDetails.getId());
-            SubscriptionPlan plan = subscriptionService.getPlanById(planId);
+            //SubscriptionPlan plan = subscriptionService.getPlanById(planId);
 
             // Створити замовлення
-            Order order = orderService.createSubscriptionOrder(user, plan, currency);
+            Order order = orderService.createSubscriptionOrder(user, planId, currency);
 
             // Перенаправити на сторінку оплати
             return "redirect:/{lang}/payment/subscription/" + order.getId();

@@ -54,7 +54,7 @@ public class SecurityConfig {
                         .antMatchers("/*/cabinet/**").authenticated()
 
                         // --- 4. Інші захищені маршрути ---
-                        .antMatchers("/*/lessons/**", "/*/profile/**").authenticated()
+                        //.antMatchers("/*/lessons/**", "/*/profile/**").authenticated()
 
                         // --- 5. Всі інші запити - публічні (або authenticated якщо треба) ---
                         .anyRequest().permitAll()

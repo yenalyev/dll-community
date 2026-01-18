@@ -58,12 +58,12 @@
         <div class="mb-8">
           <div class="flex items-baseline gap-2">
             <span class="text-6xl font-extrabold text-gray-900"
-                  th:text="${plan.getPrice('UAH').amount / 100}">299</span>
+                  th:text="${plan.getPriceForCurrency('UAH').amount / 100}">299</span>
             <div class="flex flex-col">
               <span class="text-2xl font-bold text-gray-600"
-                    th:text="${plan.getPrice('UAH').currency}">UAH</span>
+                    th:text="${plan.getPriceForCurrency('UAH').currency}">UAH</span>
               <span class="text-sm text-gray-500"
-                    th:text="'~' + ${#numbers.formatDecimal(plan.getPrice('UAH').amount / 100.0 / plan.durationInDays, 0, 2)} + ' грн/день'">
+                    th:text="'~' + ${#numbers.formatDecimal(plan.getPriceForCurrency('UAH').amount / 100.0 / plan.durationInDays, 0, 2)} + ' грн/день'">
                 ~10 грн/день
               </span>
             </div>

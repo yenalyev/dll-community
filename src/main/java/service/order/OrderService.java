@@ -9,6 +9,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import repository.OrderRepository;
+import repository.SubscriptionPlanRepository;
 import service.subscription.SubscriptionService;
 
 import java.time.LocalDateTime;
@@ -22,12 +23,18 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final SubscriptionService subscriptionService;
 
+    private final SubscriptionPlanRepository subscriptionPlanRepository;
+
     /**
      * Створити замовлення на підписку
      */
     @Transactional
-    public Order createSubscriptionOrder(User user, SubscriptionPlan plan, Currency currency) {
-        log.info("Creating subscription order for user {} with plan {}", user.getId(), plan.getId());
+    public Order createSubscriptionOrder(User user, Long planId, Currency currency) {
+        log.info("Creating subscription order for user {} with plan {}", user.getId(), planId);
+
+        // Завантажуємо план з цінами
+        SubscriptionPlan plan = subscriptionPlanRepository.findByIdWithPrices(planId)
+                .orElseThrow(() -> new IllegalArgumentException("Subscription plan not found: " + planId));
 
         Long amount = subscriptionService.getPlanPrice(plan, currency);
         if (amount == null) {
@@ -99,7 +106,7 @@ public class OrderService {
      * Отримати історію замовлень користувача
      */
     public List<Order> getUserOrders(Long userId) {
-        return orderRepository.findByUserIdOrderByCreatedAtDesc(userId);
+        return orderRepository.findByUserId(userId);
     }
 
     /**

@@ -1,6 +1,7 @@
 package entity.order;
 
 import entity.enums.SubscriptionStatus;
+
 import entity.user.User;
 import lombok.Data;
 
@@ -19,7 +20,6 @@ public class UserSubscription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // ⚠️ ЗМІНИТИ: Замість OneToOne зробити ManyToOne для історії підписок
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     private User user;
@@ -29,7 +29,7 @@ public class UserSubscription {
     private SubscriptionPlan subscriptionPlan;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "order_id") // Зв'язок з замовленням
+    @JoinColumn(name = "order_id")
     private Order order;
 
     @Column(name = "start_date", nullable = false)
@@ -42,7 +42,6 @@ public class UserSubscription {
     @Column(name = "status", nullable = false, length = 20)
     private SubscriptionStatus status;
 
-    // ID підписки в платіжній системі (для авто-продовження)
     @Column(name = "gateway_subscription_id")
     private String gatewaySubscriptionId;
 
@@ -52,18 +51,66 @@ public class UserSubscription {
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
 
+    // ⬇️ НОВЕ ПОЛЕ
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
+
     @Column(name = "cancelled_at")
     private LocalDateTime cancelledAt;
 
+    @Column(name = "next_billing_date")
+    private LocalDateTime nextBillingDate;
+
     @PrePersist
     protected void onCreate() {
-        createdAt = LocalDateTime.now();
+        LocalDateTime now = LocalDateTime.now();
+        createdAt = now;
+        updatedAt = now; // ⬅️ ініціалізуємо при створенні
     }
 
-    // Метод для перевірки чи активна підписка
+    // ⬇️ НОВИЙ МЕТОД
+    @PreUpdate
+    protected void onUpdate() {
+        updatedAt = LocalDateTime.now();
+    }
+
+    // ========== ДОПОМІЖНІ МЕТОДИ ==========
+
     public boolean isActive() {
-        return status == SubscriptionStatus.ACTIVE &&
-                LocalDateTime.now().isBefore(endDate);
+        if (status != SubscriptionStatus.ACTIVE) {
+            return false;
+        }
+
+        LocalDateTime now = LocalDateTime.now();
+        return now.isAfter(startDate) && now.isBefore(endDate);
+    }
+
+    public boolean isCancelled() {
+        return cancelledAt != null;
+    }
+
+    public boolean willAutoRenew() {
+        return autoRenew && !isCancelled() && status == SubscriptionStatus.ACTIVE;
+    }
+
+    /**
+     * Скасувати автопродовження
+     * updatedAt оновиться автоматично через @PreUpdate
+     */
+    public void cancelAutoRenew() {
+        this.autoRenew = false;
+        this.cancelledAt = LocalDateTime.now();
+    }
+
+    /**
+     * Продовжити підписку на новий період
+     * updatedAt оновиться автоматично через @PreUpdate
+     */
+    public void renew(LocalDateTime newEndDate, LocalDateTime newNextBillingDate) {
+        this.startDate = this.endDate;
+        this.endDate = newEndDate;
+        this.nextBillingDate = newNextBillingDate;
+        this.status = SubscriptionStatus.ACTIVE;
+        this.cancelledAt = null;
     }
 }
-
