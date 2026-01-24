@@ -56,7 +56,10 @@ pipeline{
                     ]){
                         remote.user = username
                         remote.password = password
-                        sshCommand(remote: remote, command: "cd /home/dll_stage/compose && docker compose -f docker-compose-stage.yml up -d")
+                        // Оновлюємо тільки сервіс dll-app
+                         sshCommand(remote: remote, command: "cd /home/dll_stage/compose && docker compose -f docker-compose-stage.yml pull dll-app")
+                         sshCommand(remote: remote, command: "cd /home/dll_stage/compose && docker compose -f docker-compose-stage.yml up -d dll-app --no-deps")
+                        //sshCommand(remote: remote, command: "cd /home/dll_stage/compose && docker compose -f docker-compose-stage.yml up -d")
                     }
                 }
             }
