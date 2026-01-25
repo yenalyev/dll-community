@@ -34,44 +34,6 @@ public class AdminController {
         return "admin/dashboard";
     }
 
-    /**
-     * Управління користувачами
-     * URL: /admin/users
-     */
-    @GetMapping("/users")
-    public String manageUsers(Model model) {
-        log.info("Admin users page accessed");
-
-        model.addAttribute("pageTitle", "Manage Users");
-
-        return "admin/users";
-    }
-
-//    /**
-//     * Управління уроками
-//     * URL: /admin/lessons
-//     */
-//    @GetMapping("/lessons")
-//    public String manageLessons(Model model) {
-//        log.info("Admin lessons page accessed");
-//
-//        model.addAttribute("pageTitle", "Manage Lessons");
-//
-//        return "admin/lessons";
-//    }
-
-    /**
-     * Управління замовленнями
-     * URL: /admin/orders
-     */
-    @GetMapping("/orders")
-    public String manageOrders(Model model) {
-        log.info("Admin orders page accessed");
-
-        model.addAttribute("pageTitle", "Manage Orders");
-
-        return "admin/orders";
-    }
 
     /**
      * Налаштування

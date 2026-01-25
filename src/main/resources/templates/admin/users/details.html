@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin}">
+<head>
+  <title th:text="'Користувач: ' + ${user.name}">User Details</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+
+  <!-- Back Button -->
+  <div class="mb-8">
+    <a href="/admin/users" class="text-blue-600 hover:text-blue-700 flex items-center mb-4">
+      <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+      </svg>
+      Назад до списку користувачів
+    </a>
+    <div class="flex items-center justify-between">
+      <div>
+        <h2 class="text-3xl font-bold text-gray-900 mb-2" th:text="${user.name}">User Name</h2>
+        <p class="text-gray-600" th:text="${user.primaryEmail}">user@example.com</p>
+      </div>
+      <span class="px-4 py-2 inline-flex text-sm font-semibold rounded-full"
+            th:class="${user.statusBadgeClass}"
+            th:text="${user.statusText}">Status</span>
+    </div>
+  </div>
+
+  <!-- Flash Messages -->
+  <div th:if="${successMessage}"
+       class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded">
+    <p th:text="${successMessage}"></p>
+  </div>
+
+  <div th:if="${errorMessage}"
+       class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+    <p th:text="${errorMessage}"></p>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Main Content -->
+    <div class="lg:col-span-2 space-y-6">
+
+      <!-- User Info -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Інформація про користувача</h3>
+
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Повне ім'я</p>
+            <p class="text-lg font-medium text-gray-900" th:text="${user.name}">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Роль</p>
+            <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full"
+                  th:classappend="${user.role == 'ADMIN'} ? 'bg-red-100 text-red-800' : (${user.role == 'MANAGER'} ? 'bg-purple-100 text-purple-800' : 'bg-gray-100 text-gray-800')"
+                  th:text="${user.role}">Role</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Основний email</p>
+            <p class="text-lg font-medium text-gray-900" th:text="${user.primaryEmail}">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Тип авторизації</p>
+            <p class="text-sm text-gray-900">
+                            <span th:if="${user.isOAuthUser}">
+                                OAuth (<span th:text="${user.authProvider}">Provider</span>)
+                            </span>
+              <span th:unless="${user.isOAuthUser}">Локальний акаунт</span>
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Дата реєстрації</p>
+            <p class="text-sm text-gray-900" th:text="${#temporals.format(user.createdAt, 'dd MMMM yyyy, HH:mm')}">-</p>
+          </div>
+          <div th:if="${user.lastLoginDate}">
+            <p class="text-sm text-gray-600 mb-1">Останній вхід</p>
+            <p class="text-sm text-gray-900" th:text="${#temporals.format(user.lastLoginDate, 'dd MMMM yyyy, HH:mm')}">-</p>
+          </div>
+        </div>
+
+        <!-- All Emails -->
+        <div th:if="${!#lists.isEmpty(user.allEmails)}" class="mt-6 pt-6 border-t border-gray-200">
+          <p class="text-sm font-semibold text-gray-900 mb-3">Всі email адреси:</p>
+          <div class="space-y-2">
+            <div th:each="email : ${user.allEmails}"
+                 class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <span class="text-sm text-gray-900" th:text="${email}">email@example.com</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Statistics -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Статистика активності</h3>
+
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Всього замовлень</p>
+            <p class="text-3xl font-bold text-gray-900" th:text="${user.totalOrders}">0</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Завершено</p>
+            <p class="text-3xl font-bold text-green-600" th:text="${user.completedOrders}">0</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Всього витрачено</p>
+            <p class="text-3xl font-bold text-gray-900">
+              <span th:text="${#numbers.formatDecimal(user.totalSpentInMainUnits, 1, 2)}">0.00</span>
+              <span class="text-sm text-gray-500">UAH</span>
+            </p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Придбано уроків</p>
+            <p class="text-3xl font-bold text-purple-600" th:text="${user.purchasedLessons}">0</p>
+          </div>
+          <div th:if="${user.lastOrderDate}">
+            <p class="text-sm text-gray-600 mb-1">Останнє замовлення</p>
+            <p class="text-sm text-gray-900" th:text="${#temporals.format(user.lastOrderDate, 'dd.MM.yyyy HH:mm')}">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Active Subscription -->
+      <div th:if="${user.activeSubscription != null}"
+           class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Активна підписка</h3>
+
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">План</p>
+            <p class="text-lg font-semibold text-gray-900" th:text="${user.activeSubscription.planName}">Monthly</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Статус</p>
+            <span class="px-3 py-1 inline-flex text-sm font-semibold rounded-full"
+                  th:classappend="${user.activeSubscription.active} ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'"
+                  th:text="${user.activeSubscription.statusText}">Active</span>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Початок</p>
+            <p class="text-sm text-gray-900" th:text="${#temporals.format(user.activeSubscription.startDate, 'dd MMMM yyyy')}">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Закінчення</p>
+            <p class="text-sm text-gray-900" th:text="${#temporals.format(user.activeSubscription.endDate, 'dd MMMM yyyy')}">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Автопродовження</p>
+            <p class="text-sm font-medium"
+               th:classappend="${user.activeSubscription.autoRenew} ? 'text-green-600' : 'text-gray-500'"
+               th:text="${user.activeSubscription.autoRenew} ? 'Увімкнено' : 'Вимкнено'">-</p>
+          </div>
+          <div th:if="${user.activeSubscription.cancelledAt != null}">
+            <p class="text-sm text-gray-600 mb-1">Скасовано</p>
+            <p class="text-sm text-red-600" th:text="${#temporals.format(user.activeSubscription.cancelledAt, 'dd.MM.yyyy HH:mm')}">-</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- User Settings -->
+      <div th:if="${user.settings}" class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Налаштування</h3>
+
+        <div class="grid grid-cols-2 gap-6">
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Мова інтерфейсу</p>
+            <p class="text-sm font-medium text-gray-900" th:text="${user.settings.interfaceLanguage ?: 'Не встановлено'}">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Тема</p>
+            <p class="text-sm font-medium text-gray-900" th:text="${user.settings.theme ?: 'Не встановлено'}">-</p>
+          </div>
+          <div>
+            <p class="text-sm text-gray-600 mb-1">Розсилка</p>
+            <p class="text-sm font-medium"
+               th:classappend="${user.settings.wantsNewsletter} ? 'text-green-600' : 'text-gray-500'"
+               th:text="${user.settings.wantsNewsletter} ? 'Підписаний' : 'Не підписаний'">-</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Sidebar -->
+    <div class="space-y-6">
+
+      <!-- Quick Actions -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-6">Швидкі дії</h3>
+
+        <div class="space-y-3">
+          <!-- Toggle Active Status -->
+          <form method="post" th:action="@{/admin/users/{id}/toggle-active(id=${user.id})}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+            <button type="submit"
+                    th:onclick="'return confirm(\'' + (${user.isActive} ? 'Деактивувати' : 'Активувати') + ' користувача?\');'"
+                    class="w-full px-4 py-3 rounded-lg font-semibold transition"
+                    th:classappend="${user.isActive} ? 'bg-red-50 text-red-700 hover:bg-red-100' : 'bg-green-50 text-green-700 hover:bg-green-100'">
+              <span th:text="${user.isActive} ? 'Деактивувати користувача' : 'Активувати користувача'"></span>
+            </button>
+          </form>
+
+          <!-- Change Role -->
+          <div x-data="{ showRoleForm: false }">
+            <button @click="showRoleForm = !showRoleForm"
+                    class="w-full px-4 py-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition font-semibold">
+              Змінити роль
+            </button>
+
+            <form x-show="showRoleForm"
+                  style="display: none;"
+                  method="post"
+                  th:action="@{/admin/users/{id}/change-role(id=${user.id})}"
+                  class="mt-3 p-4 bg-gray-50 rounded-lg">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">Нова роль:</label>
+              <select name="newRole"
+                      required
+                      class="w-full px-4 py-2 mb-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition">
+                <option th:each="role : ${availableRoles}"
+                        th:value="${role}"
+                        th:text="${role}"
+                        th:selected="${role == user.role}">Role</option>
+              </select>
+              <button type="submit"
+                      onclick="return confirm('Підтвердити зміну ролі?');"
+                      class="w-full px-4 py-2 bg-warning text-gray-900 rounded-lg hover:bg-yellow-500 transition font-semibold">
+                Підтвердити
+              </button>
+            </form>
+          </div>
+
+          <!-- Gift Subscription -->
+          <div x-data="{ showGiftForm: false }">
+            <button @click="showGiftForm = !showGiftForm"
+                    class="w-full px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition font-semibold">
+              Подарувати підписку
+            </button>
+
+            <form x-show="showGiftForm"
+                  style="display: none;"
+                  method="post"
+                  th:action="@{/admin/users/{id}/gift-subscription(id=${user.id})}"
+                  class="mt-3 p-4 bg-gray-50 rounded-lg">
+              <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+              <label class="block text-sm font-semibold text-gray-900 mb-2">План підписки:</label>
+              <select name="planId"
+                      required
+                      class="w-full px-4 py-2 mb-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition">
+                <option value="">Оберіть план</option>
+                <option th:each="plan : ${subscriptionPlans}"
+                        th:value="${plan.id}"
+                        th:text="${plan.name}">Plan</option>
+              </select>
+              <button type="submit"
+                      onclick="return confirm('Подарувати підписку цьому користувачу?');"
+                      class="w-full px-4 py-2 bg-warning text-gray-900 rounded-lg hover:bg-yellow-500 transition font-semibold">
+                Підтвердити
+              </button>
+            </form>
+          </div>
+
+          <!-- Divider -->
+          <hr class="my-3 border-gray-200">
+
+          <!-- Coming Soon Actions -->
+          <button disabled
+                  class="w-full px-4 py-3 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed">
+            Скинути пароль
+          </button>
+          <button disabled
+                  class="w-full px-4 py-3 bg-gray-100 text-gray-400 rounded-lg cursor-not-allowed">
+            Надіслати email
+          </button>
+        </div>
+
+        <p class="text-xs text-gray-500 mt-4">Деякі функції в розробці</p>
+      </div>
+
+      <!-- User ID Card -->
+      <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Технічна інформація</h3>
+
+        <div class="space-y-3">
+          <div>
+            <p class="text-xs text-gray-500 mb-1">User ID</p>
+            <p class="text-sm font-mono text-gray-900" th:text="${user.id}">123</p>
+          </div>
+          <div>
+            <p class="text-xs text-gray-500 mb-1">Створено</p>
+            <p class="text-sm text-gray-900" th:text="${#temporals.format(user.createdAt, 'dd.MM.yyyy HH:mm:ss')}">-</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
+
+</body>
+</html>

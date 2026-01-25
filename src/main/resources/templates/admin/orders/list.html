@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="uk" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/admin}">
+<head>
+    <title>Управління замовленнями</title>
+</head>
+<body>
+
+<div layout:fragment="content">
+
+    <!-- Page Header -->
+    <div class="mb-8">
+        <h2 class="text-3xl font-bold text-gray-900 mb-2">Управління замовленнями</h2>
+        <p class="text-gray-600">Перегляд та управління всіма замовленнями платформи</p>
+    </div>
+
+    <!-- Flash Messages -->
+    <div th:if="${successMessage}"
+         class="mb-6 p-4 bg-green-50 border-l-4 border-green-500 text-green-700 rounded">
+        <p th:text="${successMessage}"></p>
+    </div>
+
+    <div th:if="${errorMessage}"
+         class="mb-6 p-4 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+        <p th:text="${errorMessage}"></p>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8" th:if="${statistics}">
+
+        <!-- Total Orders -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-medium text-gray-500">Всього</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-1" th:text="${statistics.totalOrders}">0</h3>
+            <p class="text-sm text-gray-600">Замовлень</p>
+        </div>
+
+        <!-- Completed Orders -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-medium text-green-600 bg-green-50 px-2 py-1 rounded"
+                      th:text="${statistics.conversionRate != null ? #numbers.formatDecimal(statistics.conversionRate, 1, 1) + '%' : '0%'}">0%</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-1" th:text="${statistics.completedOrders}">0</h3>
+            <p class="text-sm text-gray-600">Завершено</p>
+        </div>
+
+        <!-- Pending Orders -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-medium text-gray-500">Очікують</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-1" th:text="${statistics.pendingOrders}">0</h3>
+            <p class="text-sm text-gray-600">В обробці</p>
+        </div>
+
+        <!-- Total Revenue -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                </div>
+                <span class="text-xs font-medium text-gray-500">Дохід</span>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-1"
+                th:text="${statistics.totalRevenueInMainUnits != null ? #numbers.formatDecimal(statistics.totalRevenueInMainUnits, 1, 2) : '0.00'}">0.00</h3>
+            <p class="text-sm text-gray-600">UAH/EUR/USD</p>
+        </div>
+
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6" x-data="{ showFilters: false }">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Фільтри</h3>
+            <button @click="showFilters = !showFilters"
+                    class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                <span x-show="!showFilters">Показати фільтри</span>
+                <span x-show="showFilters" style="display: none;">Сховати фільтри</span>
+            </button>
+        </div>
+
+        <form method="get" action="/admin/orders" x-show="showFilters" style="display: none;">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+
+                <!-- Status Filter -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-900 mb-2">Статус</label>
+                    <select name="status"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition">
+                        <option value="">Всі статуси</option>
+                        <option th:each="status : ${orderStatuses}"
+                                th:value="${status}"
+                                th:text="${status}"
+                                th:selected="${selectedStatus == status}">Status</option>
+                    </select>
+                </div>
+
+                <!-- Type Filter -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-900 mb-2">Тип</label>
+                    <select name="type"
+                            class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition">
+                        <option value="">Всі типи</option>
+                        <option th:each="type : ${orderTypes}"
+                                th:value="${type}"
+                                th:text="${type}"
+                                th:selected="${selectedType == type}">Type</option>
+                    </select>
+                </div>
+
+                <!-- Email Search -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-900 mb-2">Email користувача</label>
+                    <input type="text"
+                           name="email"
+                           th:value="${selectedEmail}"
+                           placeholder="user@example.com"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition">
+                </div>
+
+                <!-- Date From -->
+                <div>
+                    <label class="block text-sm font-semibold text-gray-900 mb-2">Дата від</label>
+                    <input type="date"
+                           name="from"
+                           th:value="${selectedFrom != null ? #temporals.format(selectedFrom, 'yyyy-MM-dd') : ''}"
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:border-warning transition">
+                </div>
+
+            </div>
+
+            <div class="flex items-center gap-4">
+                <button type="submit"
+                        class="bg-warning text-gray-900 px-6 py-3 rounded-lg hover:bg-yellow-500 transition font-semibold">
+                    Застосувати фільтри
+                </button>
+                <a href="/admin/orders"
+                   class="px-6 py-3 border-2 border-gray-300 rounded-lg text-gray-700 font-semibold hover:bg-gray-50 transition">
+                    Скинути
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Orders Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                <tr>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        #ID
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Користувач
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Тип
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Сума
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Статус
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Платіжна система
+                    </th>
+                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Дата створення
+                    </th>
+                    <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        Дії
+                    </th>
+                </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                <tr th:if="${orders.empty}">
+                    <td colspan="8" class="px-6 py-12 text-center text-gray-500">
+                        <svg class="mx-auto h-12 w-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"/>
+                        </svg>
+                        <p class="text-lg font-medium">Замовлень не знайдено</p>
+                        <p class="text-sm">Спробуйте змінити фільтри</p>
+                    </td>
+                </tr>
+                <tr th:each="order : ${orders}" class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <a th:href="@{/admin/orders/{id}(id=${order.id})}"
+                           class="text-sm font-medium text-blue-600 hover:text-blue-800">
+                            #<span th:text="${order.id}">123</span>
+                        </a>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="text-sm font-medium text-gray-900" th:text="${order.userName}">User Name</div>
+                        <div class="text-sm text-gray-500" th:text="${order.userEmail}">user@example.com</div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                  th:classappend="${order.orderType.name() == 'SINGLE_PURCHASE'} ? 'bg-purple-100 text-purple-800' : 'bg-blue-100 text-blue-800'"
+                                  th:text="${order.orderTypeText}">Type</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div class="text-sm font-semibold text-gray-900">
+                            <span th:text="${#numbers.formatDecimal(order.totalAmountInMainUnits, 1, 2)}">0.00</span>
+                            <span th:text="${order.currency}">UAH</span>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-3 py-1 inline-flex text-xs leading-5 font-semibold rounded-full"
+                                  th:classappend="${order.status.name() == 'COMPLETED'} ? 'bg-green-100 text-green-800' : (${order.status.name() == 'PENDING'} ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800')"
+                                  th:text="${order.statusText}">Status</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                        <span th:text="${order.paymentGateway ?: '-'}">-</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <span th:text="${#temporals.format(order.createdAt, 'dd.MM.yyyy HH:mm')}">01.01.2025 12:00</span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <a th:href="@{/admin/orders/{id}(id=${order.id})}"
+                           class="text-blue-600 hover:text-blue-900 transition">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/>
+                            </svg>
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <div th:if="${orders.totalPages > 1}" class="bg-gray-50 px-6 py-4 flex items-center justify-between border-t border-gray-200">
+            <div class="flex-1 flex justify-between sm:hidden">
+                <a th:if="${!orders.first}"
+                   th:href="@{/admin/orders(page=${orders.number - 1}, size=${orders.size})}"
+                   class="relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Попередня
+                </a>
+                <a th:if="${!orders.last}"
+                   th:href="@{/admin/orders(page=${orders.number + 1}, size=${orders.size})}"
+                   class="ml-3 relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50">
+                    Наступна
+                </a>
+            </div>
+            <div class="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                <div>
+                    <p class="text-sm text-gray-700">
+                        Показано
+                        <span class="font-medium" th:text="${orders.number * orders.size + 1}">1</span>
+                        -
+                        <span class="font-medium" th:text="${orders.number * orders.size + orders.numberOfElements}">10</span>
+                        з
+                        <span class="font-medium" th:text="${orders.totalElements}">100</span>
+                        результатів
+                    </p>
+                </div>
+                <div>
+                    <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px">
+                        <a th:if="${!orders.first}"
+                           th:href="@{/admin/orders(page=${orders.number - 1}, size=${orders.size})}"
+                           class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            ←
+                        </a>
+                        <a th:if="${!orders.last}"
+                           th:href="@{/admin/orders(page=${orders.number + 1}, size=${orders.size})}"
+                           class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                            →
+                        </a>
+                    </nav>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
