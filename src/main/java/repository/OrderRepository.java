@@ -228,4 +228,27 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("from") LocalDateTime from,
             @Param("to") LocalDateTime to
     );
+
+
+    /**
+     * Загальний дохід (тільки COMPLETED замовлення)
+     */
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o WHERE o.status = 'COMPLETED'")
+    Long calculateTotalRevenue();
+
+    /**
+     * Дохід за період
+     */
+    @Query("SELECT COALESCE(SUM(o.totalAmount), 0) FROM Order o " +
+            "WHERE o.status = 'COMPLETED' AND o.createdAt >= :since")
+    Long calculateRevenueSince(@Param("since") LocalDateTime since);
+
+    /**
+     * Останні замовлення з деталями користувача
+     */
+    @Query("SELECT o FROM Order o " +
+            "LEFT JOIN FETCH o.user u " +
+            "LEFT JOIN FETCH u.emails " +
+            "ORDER BY o.createdAt DESC")
+    List<Order> findRecentOrders(Pageable pageable);
 }

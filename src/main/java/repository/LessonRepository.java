@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -95,5 +96,12 @@ public interface LessonRepository extends JpaRepository<Lesson, Long> {
     @Query("SELECT t.lesson FROM LessonTranslation t " +
             "WHERE t.slug = :slug AND t.lang = :lang")
     Optional<Lesson> findBySlugAndLang(@Param("slug") String slug, @Param("lang") String lang);
+
+
+    /**
+     * Кількість уроків створених за період
+     */
+    @Query("SELECT COUNT(l) FROM Lesson l WHERE l.createdAt >= :since")
+    Long countLessonsSince(@Param("since") LocalDateTime since);
 
 }

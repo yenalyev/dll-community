@@ -171,4 +171,13 @@ public interface UserRepository extends JpaRepository<User, Long> {
             "LEFT JOIN Order o ON o.user.id = u.id " +
             "GROUP BY u.id")
     List<Object[]> findUsersWithOrderStatistics();
+
+
+    /**
+     * Останні зареєстровані користувачі
+     */
+    @Query("SELECT u FROM User u " +
+            "LEFT JOIN FETCH u.emails " +
+            "ORDER BY u.createdAt DESC")
+    List<User> findRecentUsers(Pageable pageable);
 }

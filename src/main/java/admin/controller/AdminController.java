@@ -1,5 +1,9 @@
 package admin.controller;
 
+import admin.dto.DashboardStatsDTO;
+import admin.dto.RecentOrderDTO;
+import admin.dto.RecentUserDTO;
+import admin.service.AdminDashboardService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -7,6 +11,8 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+
+import java.util.List;
 
 /**
  * Контролер для адміністративної панелі.
@@ -21,15 +27,21 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @PreAuthorize("hasRole('ADMIN')")
 public class AdminController {
 
-    /**
-     * Головна сторінка адмін-панелі
-     * URL: /admin
-     */
-    @GetMapping({"", "/"})
-    public String adminDashboard(Model model) {
-        log.info("Admin dashboard accessed");
+    private final AdminDashboardService dashboardService;
 
-        model.addAttribute("pageTitle", "Admin Dashboard");
+    @GetMapping({"", "/"})
+    public String dashboard(Model model) {
+        // Отримати статистику
+        DashboardStatsDTO stats = dashboardService.getDashboardStats();
+        model.addAttribute("stats", stats);
+
+        // Отримати останні замовлення (3 шт)
+        List<RecentOrderDTO> recentOrders = dashboardService.getRecentOrders(3);
+        model.addAttribute("recentOrders", recentOrders);
+
+        // Отримати останніх користувачів (4 шт)
+        List<RecentUserDTO> recentUsers = dashboardService.getRecentUsers(4);
+        model.addAttribute("recentUsers", recentUsers);
 
         return "admin/dashboard";
     }
