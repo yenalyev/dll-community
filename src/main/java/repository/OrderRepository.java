@@ -31,14 +31,15 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             @Param("lessonId") Long lessonId
     );
 
-    @Query("SELECT DISTINCT oi.lesson " +
+    @Query("SELECT oi.lesson " +
             "FROM Order o " +
             "JOIN o.items oi " +
             "WHERE o.user.id = :userId " +
             "AND oi.lesson IS NOT NULL " +
             "AND o.status = 'COMPLETED' " +
             "AND o.orderType = 'SINGLE_PURCHASE' " +
-            "ORDER BY o.createdAt DESC")
+            "GROUP BY oi.lesson " + // Групуємо по уроку
+            "ORDER BY MAX(o.createdAt) DESC") // Сортуємо за останньою покупкою
     List<Lesson> findPurchasedLessonsByUserId(@Param("userId") Long userId);
 
     @Query("SELECT o FROM Order o " +
