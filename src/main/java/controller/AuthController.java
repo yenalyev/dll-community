@@ -10,8 +10,10 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import platform.config.RedirectInterceptor;
 import service.user.UserService;
 
+import javax.servlet.http.HttpSession;
 import javax.validation.Valid;
 
 @Slf4j
@@ -31,6 +33,7 @@ public class AuthController {
             @RequestParam(required = false) String error,
             @RequestParam(required = false) String logout,
             @RequestParam(required = false) String success,
+            @RequestParam(required = false) String redirect,
             Model model) {
 
         if (!Language.isSupported(lang)) {
@@ -52,6 +55,12 @@ public class AuthController {
             log.debug("Registration successful, showing login page");
         }
 
+        // Передаємо redirect параметр у view (для прихованого поля форми, якщо потрібно)
+        if (redirect != null && !redirect.isEmpty()) {
+            model.addAttribute("redirect", redirect);
+            log.debug("Login page with redirect param: {}", redirect);
+        }
+
         return "login";
     }
 
@@ -59,8 +68,19 @@ public class AuthController {
      * Показує сторінку реєстрації
      */
     @GetMapping("/register")
-    public String registerPage(@PathVariable String lang, Model model) {
+    public String registerPage(
+            @PathVariable String lang,
+            @RequestParam(required = false) String redirect,
+            Model model) {
+
         model.addAttribute("registerDto", new RegisterDto());
+
+        // Передаємо redirect параметр у view
+        if (redirect != null && !redirect.isEmpty()) {
+            model.addAttribute("redirect", redirect);
+            log.debug("Register page with redirect param: {}", redirect);
+        }
+
         return "register";
     }
 
@@ -73,6 +93,7 @@ public class AuthController {
             @Valid @ModelAttribute("registerDto") RegisterDto registerDto,
             BindingResult bindingResult,
             RedirectAttributes redirectAttributes,
+            HttpSession session,
             Model model) {
 
         log.info("Registration attempt for email: {}", registerDto.getEmail());
@@ -89,9 +110,19 @@ public class AuthController {
 
             log.info("User successfully registered: {}", registerDto.getEmail());
 
+            // Отримуємо redirect URL з session (якщо він був збережений RedirectInterceptor)
+            String redirectUrl = RedirectInterceptor.getRedirectUrl(session);
+
             // Перенаправляємо на сторінку входу з повідомленням про успіх
             redirectAttributes.addFlashAttribute("success",
                     "Registration successful! Please login.");
+
+            // Якщо є redirect URL - передаємо його далі на login
+            if (redirectUrl != null && !redirectUrl.isEmpty()) {
+                log.debug("Preserving redirect URL after registration: {}", redirectUrl);
+                return "redirect:/" + lang + "/login?success=true&redirect=" +
+                        java.net.URLEncoder.encode(redirectUrl, "UTF-8");
+            }
 
             return "redirect:/" + lang + "/login?success=true";
 

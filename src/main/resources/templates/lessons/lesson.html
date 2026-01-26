@@ -57,7 +57,7 @@
                             </div>
                             <h3 class="text-xl font-bold text-green-900 mb-1">Безкоштовно!</h3>
                             <p class="text-green-700 text-xs font-medium leading-relaxed">
-                                Цей урок відкритий для всіх користувачів спільноти.
+                                Цей урок безкоштовний для всіх зареєстрованих користувачів.
                             </p>
                         </div>
 
@@ -89,7 +89,9 @@
                         <h3 class="text-xs font-black text-gray-400 uppercase tracking-[0.2em] ml-1">Матеріали уроку</h3>
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div th:each="material : ${lesson.materials}">
-                                <a th:href="${material.content}" target="_blank" class="group flex items-center gap-3 p-2.5 bg-[#1a1a1a] hover:bg-gray-800 text-white rounded-xl transition-all material-shadow border border-transparent">
+                                <a th:href="@{/{lang}/lessons/{lessonId}/materials/{materialId}(lang=${#locale.language}, lessonId=${lesson.id}, materialId=${material.id})}"
+                                   target="_blank"
+                                   class="group flex items-center gap-3 p-2.5 bg-[#1a1a1a] hover:bg-gray-800 text-white rounded-xl transition-all material-shadow border border-transparent">
                                     <div class="w-8 h-8 flex flex-shrink-0 items-center justify-center bg-white/10 rounded-lg group-hover:scale-105 transition-transform">
                                         <svg th:if="${material.materialType == T(entity.lesson.LessonMaterial$MaterialType).PDF}" class="w-4 h-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                                         <svg th:if="${material.materialType == T(entity.lesson.LessonMaterial$MaterialType).LINK}" class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/></svg>
@@ -119,6 +121,150 @@
             </aside>
         </div>
     </div>
+
+    <!-- ============================================ -->
+    <!-- МОДАЛЬНЕ ВІКНО ДЛЯ ВІДМОВИ В ДОСТУПІ -->
+    <!-- ============================================ -->
+    <div x-data="accessModal()"
+         x-init="init()"
+         x-show="showModal"
+         x-cloak
+         class="fixed inset-0 z-50 overflow-y-auto"
+         style="display: none;">
+
+        <!-- Backdrop -->
+        <div class="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
+             @click="closeModal()"
+             x-show="showModal"
+             x-transition:enter="ease-out duration-300"
+             x-transition:enter-start="opacity-0"
+             x-transition:enter-end="opacity-100"
+             x-transition:leave="ease-in duration-200"
+             x-transition:leave-start="opacity-100"
+             x-transition:leave-end="opacity-0">
+        </div>
+
+        <!-- Modal -->
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="relative bg-white rounded-3xl shadow-2xl max-w-md w-full p-8"
+                 x-show="showModal"
+                 x-transition:enter="ease-out duration-300"
+                 x-transition:enter-start="opacity-0 transform scale-95"
+                 x-transition:enter-end="opacity-100 transform scale-100"
+                 x-transition:leave="ease-in duration-200"
+                 x-transition:leave-start="opacity-100 transform scale-100"
+                 x-transition:leave-end="opacity-0 transform scale-95">
+
+                <!-- Close button -->
+                <button @click="closeModal()"
+                        class="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                </button>
+
+                <!-- NOT_AUTHENTICATED -->
+                <div x-show="reason === 'NOT_AUTHENTICATED'" class="text-center">
+                    <div class="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-3">Увійдіть для доступу</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Цей урок доступний лише для зареєстрованих користувачів.
+                        Увійдіть або створіть обліковий запис, щоб отримати доступ до матеріалів.
+                    </p>
+                    <div class="space-y-3">
+                        <a th:href="@{/{lang}/login(lang=${#locale.language}, redirect=${#httpServletRequest.requestURI})}"
+                           class="block w-full bg-[#FDD95F] hover:bg-yellow-500 text-gray-900 font-bold py-3 px-6 rounded-xl transition shadow-md">
+                            Увійти
+                        </a>
+                        <a th:href="@{/{lang}/register(lang=${#locale.language}, redirect=${#httpServletRequest.requestURI})}"
+                           class="block w-full bg-gray-100 hover:bg-gray-200 text-gray-900 font-semibold py-3 px-6 rounded-xl transition">
+                            Зареєструватись
+                        </a>
+                    </div>
+                </div>
+
+                <!-- NO_SUBSCRIPTION / SUBSCRIPTION_EXPIRED -->
+                <div x-show="reason === 'NO_SUBSCRIPTION' || reason === 'SUBSCRIPTION_EXPIRED'" class="text-center">
+                    <div class="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <svg class="w-8 h-8 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"/>
+                        </svg>
+                    </div>
+                    <h3 class="text-2xl font-bold text-gray-900 mb-3">Оформіть підписку</h3>
+                    <p class="text-gray-600 mb-6 leading-relaxed">
+                        Цей урок доступний за підпискою або індивідуальною покупкою.
+                    </p>
+
+                    <!-- Підписка -->
+                    <div class="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-2xl p-6 mb-4 border-2 border-yellow-200">
+                        <div class="text-sm font-semibold text-yellow-900 mb-2">💎 Рекомендовано</div>
+                        <div class="text-3xl font-black text-gray-900 mb-2">10 EUR<span class="text-base font-normal text-gray-600">/міс</span></div>
+                        <ul class="text-left space-y-2 mb-4">
+                            <li class="flex items-center text-sm text-gray-700">
+                                <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Доступ до всіх уроків
+                            </li>
+                            <li class="flex items-center text-sm text-gray-700">
+                                <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Нові матеріали щотижня
+                            </li>
+                            <li class="flex items-center text-sm text-gray-700">
+                                <svg class="w-5 h-5 text-green-500 mr-2 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+                                Підтримка спільноти
+                            </li>
+                        </ul>
+                        <a th:href="@{/{lang}/subscription(lang=${#locale.language})}"
+                           class="block w-full bg-gray-900 hover:bg-gray-800 text-white font-bold py-3 px-6 rounded-xl transition shadow-md">
+                            Оформити підписку
+                        </a>
+                    </div>
+
+                    <!-- Або купити окремо -->
+                    <div class="text-center">
+                        <div class="text-sm text-gray-500 font-medium mb-3">або</div>
+                        <a th:href="@{/{lang}/lessons/{slug}/purchase(lang=${#locale.language}, slug=${translation.slug})}"
+                           class="inline-block text-gray-700 font-semibold hover:text-gray-900 transition border-b-2 border-gray-300 hover:border-gray-900">
+                            Купити тільки цей урок за 5 EUR →
+                        </a>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function accessModal() {
+            return {
+                showModal: false,
+                reason: null,
+
+                init() {
+                    // Перевіряємо URL параметри
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const accessDenied = urlParams.get('accessDenied');
+                    const reason = urlParams.get('reason');
+
+                    if (accessDenied === 'true' && reason) {
+                        this.reason = reason;
+                        this.showModal = true;
+
+                        // Очищаємо URL від параметрів (опціонально)
+                        const cleanUrl = window.location.pathname;
+                        window.history.replaceState({}, document.title, cleanUrl);
+                    }
+                },
+
+                closeModal() {
+                    this.showModal = false;
+                }
+            }
+        }
+    </script>
 </div>
 </body>
 </html>

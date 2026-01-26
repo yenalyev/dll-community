@@ -12,12 +12,11 @@ import org.springframework.web.servlet.i18n.SessionLocaleResolver;
 import java.util.Locale;
 
 @Configuration
-@RequiredArgsConstructor  // <-- ДОДАТИ ЦЮ АНОТАЦІЮ для DI
+@RequiredArgsConstructor
 public class LocaleConfig implements WebMvcConfigurer {
 
-    // ===== ДОДАТИ ЦЕ ПОЛЕ =====
     private final SubscriptionStatusInterceptor subscriptionStatusInterceptor;
-    // =========================
+    private final RedirectInterceptor redirectInterceptor;  // ← ДОДАНО
 
     /**
      * LocaleResolver визначає, яка мова використовується.
@@ -32,7 +31,7 @@ public class LocaleConfig implements WebMvcConfigurer {
     }
 
     /**
-     * Реєструємо наш кастомний перехоплювач в Spring MVC.
+     * Реєструємо наші кастомні перехоплювачі в Spring MVC.
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -46,9 +45,9 @@ public class LocaleConfig implements WebMvcConfigurer {
                         "/webjars/**",
                         "/error"
                 )
-                .order(0);  // <-- Виконується ПЕРШИМ
+                .order(0);  // Виконується ПЕРШИМ
 
-        // ===== 2. SUBSCRIPTION STATUS INTERCEPTOR (НОВИЙ) =====
+        // ===== 2. SUBSCRIPTION STATUS INTERCEPTOR (існуючий) =====
         registry.addInterceptor(subscriptionStatusInterceptor)
                 .addPathPatterns("/**")  // Всі шляхи
                 .excludePathPatterns(
@@ -60,6 +59,14 @@ public class LocaleConfig implements WebMvcConfigurer {
                         "/api/**",        // REST API
                         "/error"          // Сторінка помилок
                 )
-                .order(1);  // <-- Виконується ДРУГИМ
+                .order(1);  // Виконується ДРУГИМ
+
+        // ===== 3. REDIRECT INTERCEPTOR (НОВИЙ) =====
+        registry.addInterceptor(redirectInterceptor)
+                .addPathPatterns(
+                        "/*/login",      // Зберігати redirect на сторінці логіна
+                        "/*/register"    // Зберігати redirect на сторінці реєстрації
+                )
+                .order(2);  // Виконується ТРЕТІМ
     }
 }

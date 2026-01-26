@@ -25,7 +25,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE o.user.id = :userId " +
             "AND oi.lesson.id = :lessonId " +
             "AND o.status = 'COMPLETED' " +
-            "AND o.orderType = 'SINGLE_PURCHASE'")
+            "AND o.orderType = 'LESSON_PURCHASE'")
     boolean existsCompletedOrderForLesson(
             @Param("userId") Long userId,
             @Param("lessonId") Long lessonId
@@ -37,7 +37,7 @@ public interface OrderRepository extends JpaRepository<Order, Long> {
             "WHERE o.user.id = :userId " +
             "AND oi.lesson IS NOT NULL " +
             "AND o.status = 'COMPLETED' " +
-            "AND o.orderType = 'SINGLE_PURCHASE' " +
+            "AND o.orderType = 'LESSON_PURCHASE' " +
             "GROUP BY oi.lesson " + // Групуємо по уроку
             "ORDER BY MAX(o.createdAt) DESC") // Сортуємо за останньою покупкою
     List<Lesson> findPurchasedLessonsByUserId(@Param("userId") Long userId);

@@ -9,14 +9,11 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
-import org.springframework.security.web.authentication.AuthenticationFailureHandler;
-import org.springframework.security.web.authentication.SimpleUrlAuthenticationFailureHandler;
+import platform.config.security.CustomAuthenticationSuccessHandler;
 import platform.config.security.CustomUserDetailsService;
 import platform.config.security.OAuth2SuccessHandler;
 
 import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 
 @Configuration
 @EnableWebSecurity
@@ -26,19 +23,11 @@ public class SecurityConfig {
 
     private final OAuth2SuccessHandler oAuth2SuccessHandler;
     private final CustomUserDetailsService customUserDetailsService;
+    private final CustomAuthenticationSuccessHandler customAuthenticationSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                // ⬇️ CSRF для Java 8
-                .csrf()
-                .ignoringAntMatchers(
-                        "/api/payment/**",              // Всі payment API endpoints
-                        "/*/subscription/success/**",    // Return URL від WayForPay
-                        "/*/subscription/failed/**"      // Failed URL
-                )
-                .and()
-
                 .authorizeHttpRequests(authorize -> authorize
                         // --- 1. Публічні сторінки ---
                         .antMatchers(
@@ -53,12 +42,7 @@ public class SecurityConfig {
                                 "/*/login", "/*/register",
                                 "/uploads/**",
                                 // API для OAuth2
-                                "/oauth2/**", "/login/oauth2/**",
-                                // ⬇️ ВИПРАВЛЕНО: Success/Failed сторінки для оплати
-                                "/*/subscription/success/**",
-                                "/*/subscription/failed/**",
-                                // API Payment callback (webhook від WayForPay)
-                                "/api/payment/callback/**"
+                                "/oauth2/**", "/login/oauth2/**"
                         ).permitAll()
 
                         // --- 2. Адмін-панель (тільки для ADMIN) ---
@@ -78,10 +62,7 @@ public class SecurityConfig {
                 .formLogin(formLogin -> formLogin
                         .loginPage("/login")
                         .loginProcessingUrl("/*/login") // Працює з /uk/login, /en/login, /de/login
-                        .successHandler((request, response, authentication) -> {
-                            String lang = extractLangFromUrl(request);
-                            response.sendRedirect("/" + lang + "/");
-                        })
+                        .successHandler(customAuthenticationSuccessHandler)  // ← КАСТОМНИЙ HANDLER З REDIRECT
                         .failureHandler((request, response, exception) -> {
                             String lang = extractLangFromUrl(request);
                             response.sendRedirect("/" + lang + "/login?error=true");
@@ -93,7 +74,7 @@ public class SecurityConfig {
                 // --- 5. Налаштування OAuth2 ---
                 .oauth2Login(oauth2 -> oauth2
                         .loginPage("/login")
-                        .successHandler(oAuth2SuccessHandler)
+                        .successHandler(oAuth2SuccessHandler)  // ← ТАКОЖ ПІДТРИМУЄ REDIRECT
                         .failureUrl("/login?error=oauth")
                 )
 

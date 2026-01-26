@@ -31,26 +31,31 @@ public class LessonAccessService {
     /**
      * Перевірити чи має користувач доступ до уроку
      *
+     * ОНОВЛЕНА ЛОГІКА:
+     * - FREE уроки доступні ТІЛЬКИ для залогінених користувачів
+     * - PAID уроки потребують підписки або покупки
+     *
      * @param user користувач (може бути null якщо не залогінений)
      * @param lesson урок
      * @return true якщо є доступ
      */
     public boolean hasAccessToLesson(User user, Lesson lesson) {
 
-        // 1. FREE уроки доступні всім (навіть незалогіненим)
-        if (lesson.getAccessLevel() == Lesson.AccessLevel.FREE) {
-            log.debug("Lesson {} is FREE - access granted", lesson.getId());
-            return true;
-        }
-
-        // 2. PAID уроки - потрібна авторизація
+        // 1. Спочатку перевіряємо авторизацію - незалогінені не мають доступу ВЗАГАЛІ
         if (user == null) {
-            log.debug("User not authenticated - access denied to paid lesson {}",
-                    lesson.getId());
+            log.debug("User not authenticated - access denied to lesson {} (accessLevel: {})",
+                    lesson.getId(), lesson.getAccessLevel());
             return false;
         }
 
-        // 3. Перевірка активної підписки
+        // 2. FREE уроки доступні всім залогіненим користувачам
+        if (lesson.getAccessLevel() == Lesson.AccessLevel.FREE) {
+            log.debug("Lesson {} is FREE and user {} is authenticated - access granted",
+                    lesson.getId(), user.getId());
+            return true;
+        }
+
+        // 3. PAID уроки - перевірка активної підписки
         if (hasActiveSubscription(user)) {
             log.debug("User {} has active subscription - access granted to lesson {}",
                     user.getId(), lesson.getId());
@@ -124,33 +129,37 @@ public class LessonAccessService {
     /**
      * Отримати причину відсутності доступу (для відображення в UI)
      *
+     * ОНОВЛЕНА ЛОГІКА:
+     * - Для FREE уроків незалогінений отримує NOT_AUTHENTICATED
+     * - Для PAID уроків залежить від історії підписок
+     *
      * @param user користувач
      * @param lesson урок
      * @return причина або null якщо є доступ
      */
     public AccessDenialReason getAccessDenialReason(User user, Lesson lesson) {
 
-        // FREE урок - доступ є
-        if (lesson.getAccessLevel() == Lesson.AccessLevel.FREE) {
-            return null;
-        }
-
-        // Не залогінений
+        // Не залогінений - завжди NOT_AUTHENTICATED (навіть для FREE)
         if (user == null) {
             return AccessDenialReason.NOT_AUTHENTICATED;
         }
 
-        // Є підписка - доступ є
+        // FREE урок + залогінений - доступ є
+        if (lesson.getAccessLevel() == Lesson.AccessLevel.FREE) {
+            return null;
+        }
+
+        // PAID урок: є підписка - доступ є
         if (hasActiveSubscription(user)) {
             return null;
         }
 
-        // Купив урок - доступ є
+        // PAID урок: купив урок - доступ є
         if (hasPurchasedLesson(user, lesson)) {
             return null;
         }
 
-        // Перевіряємо чи була підписка раніше
+        // PAID урок: перевіряємо чи була підписка раніше
         boolean hadSubscription = subscriptionRepository.existsByUserIdAndStatusIn(
                 user.getId(),
                 Arrays.asList(

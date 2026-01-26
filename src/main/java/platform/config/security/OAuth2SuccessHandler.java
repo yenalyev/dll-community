@@ -10,18 +10,22 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.stereotype.Component;
+import platform.config.RedirectInterceptor;
 import service.user.UserService;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.servlet.http.HttpSession;
 import java.io.IOException;
 
 /**
  * Handler для обробки успішної OAuth2 автентифікації.
  *
- * Після успішного OAuth2 логіну замінює DefaultOAuth2User на CustomUserDetails,
- * щоб забезпечити єдиний інтерфейс для доступу до даних користувача.
+ * Після успішного OAuth2 логіну:
+ * 1. Замінює DefaultOAuth2User на CustomUserDetails
+ * 2. Перевіряє чи є збережений redirect URL в session
+ * 3. Редірект на збережений URL або на головну
  */
 @Slf4j
 @Component
@@ -87,7 +91,24 @@ public class OAuth2SuccessHandler extends SavedRequestAwareAuthenticationSuccess
             return;
         }
 
-        // Перенаправляємо користувача
+        // ========== REDIRECT LOGIC ==========
+        // Перевіряємо чи є збережений redirect URL в session
+        HttpSession session = request.getSession(false);
+        String redirectUrl = RedirectInterceptor.getRedirectUrl(session);
+
+        if (redirectUrl != null && !redirectUrl.isEmpty()) {
+            // Очищаємо redirect URL з session
+            RedirectInterceptor.clearRedirectUrl(session);
+
+            log.info("OAuth2: Redirecting user {} to saved URL: {}",
+                    email, redirectUrl);
+
+            response.sendRedirect(redirectUrl);
+            return;
+        }
+        // ====================================
+
+        // Редірект на головну сторінку якщо немає збереженого URL
         setDefaultTargetUrl("/");
         super.onAuthenticationSuccess(request, response, authentication);
     }
